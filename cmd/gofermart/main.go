@@ -12,17 +12,20 @@ import (
 )
 
 func main() {
-	cfg := flag.ParseFlags()
-	config.Read(&cfg)
+	log := logger.New()
 
-	log := logger.NewLogger()
+	cfg := flag.Parse()
+	err := config.Read(&cfg)
+	if err != nil {
+		log.Error("Error reading env file", "error", err)
+	}
+
 	ctx := context.Background()
 
-	store, err := storage.NewStorage(ctx, &cfg)
+	store, err := storage.New(ctx, &cfg)
 	if err != nil {
 		log.Error("Error creating new storage", "error", err)
 	}
-	defer store.File.Close()
 	defer store.DB.Close()
 
 	s := services.NewGofermartService(ctx, log, store)
