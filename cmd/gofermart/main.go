@@ -29,9 +29,9 @@ func main() {
 	defer store.DB.Close()
 
 	s := services.NewGofermartService(ctx, log, store)
-	h := handler.NewHandler(s, log)
+	h := handler.New(s, log)
 
-	t := transport.NewTransport(cfg, h, log)
+	t := transport.New(cfg, h, log)
 	r := transport.NewRouter(t)
 	r.Run(cfg.ServerAddr)
 }

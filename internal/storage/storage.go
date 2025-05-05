@@ -29,10 +29,15 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 
 	db, err := sql.Open("pgx", cfg.DatabaseURI)
 	if err != nil {
-		return nil, err
+		return nil, ErrBadConn
 	}
 
-	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY);`
+	err = db.Ping()
+	if err != nil {
+		return nil, ErrBadConn
+	}
+
+	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text);`
 	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order_id text PRIMARY KEY);`
 	var txsQuery = `CREATE TABLE IF NOT EXISTS txs (tx_id text PRIMARY KEY);`
 	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (balance_id text PRIMARY KEY);`
