@@ -1,19 +1,19 @@
 package storage
 
 import (
-	"bufio"
+	// "bufio"
 	"context"
-	"encoding/json"
-	"errors"
-	"os"
+	// "encoding/json"
+	// "errors"
+	// "os"
 
 	"database/sql"
 	"gofermart/internal/config"
-	"gofermart/internal/models"
+	// "gofermart/internal/models"
 
-	"github.com/deatil/go-encoding/base62"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
+	// "github.com/deatil/go-encoding/base62"
+	// "github.com/jackc/pgerrcode"
+	// "github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -37,7 +37,7 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 		return nil, ErrBadConn
 	}
 
-	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text);`
+	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text, connected bool DEFAULT false);`
 	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order_id text PRIMARY KEY);`
 	var txsQuery = `CREATE TABLE IF NOT EXISTS txs (tx_id text PRIMARY KEY);`
 	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (balance_id text PRIMARY KEY);`

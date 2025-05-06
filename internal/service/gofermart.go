@@ -2,15 +2,14 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
-	"sync"
 	"gofermart/internal/models"
 	"gofermart/internal/storage"
 )
 
 type Service interface {
-
+	Register(ctx context.Context, user models.User) error
+	Login(ctx context.Context, user models.User) error
 }
 
 type Gofermart struct {

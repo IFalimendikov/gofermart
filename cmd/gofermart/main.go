@@ -5,7 +5,7 @@ import (
 	"gofermart/internal/config"
 	"gofermart/internal/flag"
 	"gofermart/internal/logger"
-	"gofermart/internal/services"
+	"gofermart/internal/service"
 	"gofermart/internal/storage"
 	"gofermart/internal/transport"
 	"gofermart/internal/handler"
@@ -28,10 +28,14 @@ func main() {
 	}
 	defer store.DB.Close()
 
-	s := services.NewGofermartService(ctx, log, store)
+	s, err := service.New(log, store)
+	if err != nil {
+		log.Error("Error creating new gofermart service", "error", err)
+	}
+
 	h := handler.New(s, log)
 
-	t := transport.New(cfg, h, log)
-	r := transport.NewRouter(t)
+	t := transport.New(&cfg, h, log)
+	r := t.NewRouter()
 	r.Run(cfg.ServerAddr)
 }

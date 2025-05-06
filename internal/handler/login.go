@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) Register(c *gin.Context, cfg config.Config) {
+func (h *Handler) Login(c *gin.Context, cfg config.Config) {
 	var user models.User
 
 	body, err := io.ReadAll(c.Request.Body)
@@ -35,10 +35,10 @@ func (h *Handler) Register(c *gin.Context, cfg config.Config) {
 	userID := c.GetString("user_id")
 	user.ID = userID
 
-	err = h.Service.Register(c.Request.Context(), user)
+	err = h.Service.Login(c.Request.Context(), user)
 	if err != nil {
-		if errors.Is(err, storage.ErrDuplicateLogin) {
-			c.Status(http.StatusConflict)
+		if errors.Is(err, storage.ErrWrongPassword) {
+			c.Status(http.StatusUnauthorized)
 			return
 		}
 		c.Status(http.StatusBadRequest)

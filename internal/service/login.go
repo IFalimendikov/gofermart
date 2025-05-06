@@ -5,8 +5,8 @@ import (
 	"gofermart/internal/models"
 )
 
-func (s *Gofermart) Register(ctx context.Context, user models.User) error {
-	err := s.Storage.Register(ctx, user)
+func (s *Gofermart) Login(ctx context.Context, user models.User) error {
+	err := s.Storage.Login(ctx, user)
 	if err != nil {
 		return err
 	}

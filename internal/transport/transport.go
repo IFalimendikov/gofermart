@@ -1,23 +1,26 @@
 package transport
 
 import (
-	"bytes"
-	"compress/gzip"
-	"io"
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"gofermart/internal/config"
 	"gofermart/internal/handler"
+	"gofermart/internal/models"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 )
+
+type Service interface {
+	Register(ctx context.Context, user models.User) error
+	Login(ctx context.Context, user models.User) error
+}
+
 
 type Transport struct {
 	Handler *handler.Handler
@@ -50,6 +53,10 @@ func(t *Transport) NewRouter() *gin.Engine {
 		t.Handler.Register(c, *t.Config)
 	})
 
+	r.POST("/api/user/login", func(c *gin.Context){
+		t.Handler.Login(c, *t.Config)
+	})
+
 	return r
 }
 
@@ -57,7 +64,7 @@ func (t *Transport) withLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		uri := c.Request.RequestURI
-		method := c.Request.method
+		method := c.Request.Method
 
 		c.Next()
 
@@ -65,7 +72,7 @@ func (t *Transport) withLogging() gin.HandlerFunc {
 		size := c.Writer.Size()
 		latency := time.Since(start)
 
-		log.Info("request completed",
+		t.Log.Info("request completed",
 		"uri", uri,
 		"method", method,
 		"duration", latency.String(),
@@ -104,7 +111,7 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 
 		UserID = uuid.NewString()
 
-		token := jwt.NewWithClaim(jwt.SigningMethodHS256, Claim{
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 			},
