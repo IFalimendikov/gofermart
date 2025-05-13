@@ -27,5 +27,9 @@ func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order,
 	if len(orders) == 0 {
 		return nil, ErrNoOrdersFound
 	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 	return orders, nil
 }
