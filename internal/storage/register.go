@@ -11,6 +11,18 @@ import (
 )
 
 func (s *Storage) Register(ctx context.Context, user models.User) error {
+    var existingUser models.User
+    err := s.DB.QueryRowContext(ctx, 
+        "SELECT user_id, login, password FROM users WHERE login = $1", 
+        user.Login).Scan(&existingUser.ID, &existingUser.Login, &existingUser.Password)
+    
+    if err == nil {
+        if existingUser.ID == user.ID && existingUser.Password == user.Password {
+            return nil
+        }
+        return ErrDuplicateLogin
+    }
+
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
@@ -28,7 +40,7 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return ErrDuplicateLogin
+			return err
 		}
 		return err
 	}
@@ -44,7 +56,7 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return ErrDuplicateLogin
+			return err
 		}
 		return err
 	}
