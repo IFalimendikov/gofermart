@@ -1,0 +1,132 @@
+package storage
+
+import (
+	// "bufio"
+	"context"
+	// "encoding/json"
+	// "errors"
+	// "os"
+
+	"database/sql"
+	"gofermart/internal/config"
+	"gofermart/internal/models"
+
+	// "github.com/deatil/go-encoding/base62"
+	// "github.com/jackc/pgerrcode"
+	// "github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/stdlib"
+)
+
+type Storage struct {
+	cfg *config.Config
+	DB *sql.DB
+}
+
+func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
+	if cfg.DatabaseURI == "" {
+		return nil, ErrBadConn
+	}
+
+	db, err := sql.Open("pgx", cfg.DatabaseURI)
+	if err != nil {
+		return nil, ErrBadConn
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, ErrBadConn
+	}
+
+	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text, connected bool DEFAULT false);`
+	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order text PRIMARY KEY, user_id text, status text, accrual integer DEFAULT NULL, uploaded_at text);`
+	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals (order text PRIMARY KEY, user_id text, sum integer, processed_at text);`
+	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (user_id text PRIMARY KEY, current integer, withdrawn integer);`
+
+	tables := []string{usersQuery, ordersQuery, withdrawalsQuery, balancesQuery}
+
+	for _, q := range tables {
+		_, err = db.ExecContext(ctx, q)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	storage := Storage{
+		cfg: cfg,
+		DB: db,
+	}
+
+	return &storage, nil
+}
+
+func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
+	orders := make([]models.Order, 0)
+	var query = `SELECT order, status FROM orders WHERE status = 1$ OR status = $2`
+	stmt, err := s.DB.PrepareContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, query, "NEW", "PROCESSING")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var order models.Order
+		err = rows.Scan(&order.Order, &order.Status)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error {
+	tx ,err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE order = $3`
+	stmtOrdr, err := s.DB.PrepareContext(ctx, queryOrdr)
+	if err != nil {
+		return err
+	}
+	defer stmtOrdr.Close()
+
+	var queryBal = `UPDATE balances SET current = current + $1 WHERE user_id = $2`
+	stmtBal, err := s.DB.PrepareContext(ctx, queryBal)
+	if err != nil {
+		return err
+	}
+	defer stmtBal.Close()
+
+	
+	for _, order := range orders {
+		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
+		if err != nil {
+			return err
+		}
+		if order.Accrual != 0 {
+			var query = `UPDATE balances SET current = current + $1 WHERE user_id = $2`
+			_, err = stmtBal.ExecContext(ctx, query, order.Accrual, order.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
