@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	ServerAddr  string `env:"RUN_ADDRESS"`
-	DatabaseURI string `env:"DATABASE_URI"`
-	AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
+    ServerAddr  string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
+    DatabaseURI string `env:"DATABASE_URI"`
+    AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 }
 
 func Read(cfg *Config) error {

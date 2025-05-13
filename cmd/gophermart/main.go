@@ -20,6 +20,7 @@ func main() {
 	if err != nil {
 		log.Error("Error reading env file", "error", err)
 	}
+	log.Info("Config after env read", "address", cfg.ServerAddr)  // Add this
 
 	ctx := context.Background()
 
