@@ -158,7 +158,7 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 		}
 
 		c.Set("user_id", UserID)
-		c.SetCookie("jwt", signedToken, 60, "/", "", false, true)
+		c.SetCookie("jwt", signedToken, 3600, "/", "", false, true)
 		c.Next()
 	}
 }

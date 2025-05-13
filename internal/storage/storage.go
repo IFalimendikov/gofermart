@@ -1,19 +1,11 @@
 package storage
 
 import (
-	// "bufio"
 	"context"
-	// "encoding/json"
-	// "errors"
-	// "os"
 
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
-
-	// "github.com/deatil/go-encoding/base62"
-	// "github.com/jackc/pgerrcode"
-	// "github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 

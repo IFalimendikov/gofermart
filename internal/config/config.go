@@ -17,7 +17,6 @@ func Read(cfg *Config) error {
         return err
     }
 
-    // Only use env vars if flag values are empty
     if cfg.ServerAddr == "" {
         cfg.ServerAddr = os.Getenv("RUN_ADDRESS")
     }
