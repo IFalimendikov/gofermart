@@ -11,28 +11,24 @@ type Config struct {
     DatabaseURI string `env:"DATABASE_URI"`
     AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
 }
-
 func Read(cfg *Config) error {
-	cfgN := Config{}
-	err := env.Load()
-	if err != nil {
-		return err
-	}
+    err := env.Load()
+    if err != nil && !os.IsNotExist(err) {
+        return err
+    }
 
-	cfgN.ServerAddr = os.Getenv("RUN_ADDRESS")
-	if cfgN.ServerAddr != "" {
-		cfg.ServerAddr = cfgN.ServerAddr
-	}
-	
-	cfg.DatabaseURI = os.Getenv("DATABASE_URI")
-	if cfgN.DatabaseURI != "" {
-		cfg.DatabaseURI = cfgN.DatabaseURI
-	}
+    // Only use env vars if flag values are empty
+    if cfg.ServerAddr == "" {
+        cfg.ServerAddr = os.Getenv("RUN_ADDRESS")
+    }
 
-	cfg.AccrualAddr = os.Getenv("ACCRUAL_SYSTEM_ADDRESS")
-	if cfgN.AccrualAddr != "" {
-		cfg.AccrualAddr = cfgN.AccrualAddr
-	}
+    if cfg.DatabaseURI == "" {
+        cfg.DatabaseURI = os.Getenv("DATABASE_URI")
+    }
 
-	return nil
+    if cfg.AccrualAddr == "" {
+        cfg.AccrualAddr = os.Getenv("ACCRUAL_SYSTEM_ADDRESS")
+    }
+
+    return nil
 }
