@@ -143,7 +143,7 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
 			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60* time.Minute)),
 			},
 			UserID: UserID,
 		})
