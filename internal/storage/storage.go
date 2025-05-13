@@ -38,8 +38,8 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 	}
 
 	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text, connected bool DEFAULT false);`
-	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order text PRIMARY KEY, user_id text, status text, accrual integer DEFAULT NULL, uploaded_at text);`
-	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals (order text PRIMARY KEY, user_id text, sum integer, processed_at text);`
+	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order_id text PRIMARY KEY, user_id text, status text, accrual integer DEFAULT NULL, uploaded_at text);`
+	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals (order_id text PRIMARY KEY, user_id text, sum integer, processed_at text);`
 	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (user_id text PRIMARY KEY, current integer, withdrawn integer);`
 
 	tables := []string{usersQuery, ordersQuery, withdrawalsQuery, balancesQuery}
@@ -61,14 +61,14 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 
 func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 	orders := make([]models.Order, 0)
-	var query = `SELECT order, status FROM orders WHERE status = 1$ OR status = $2`
+	var query = `SELECT order_id, status FROM orders WHERE status = $1 OR status = $2`
 	stmt, err := s.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.QueryContext(ctx, query, "NEW", "PROCESSING")
+	rows, err := stmt.QueryContext(ctx, "NEW", "PROCESSING")
 	if err != nil {
 		return nil, err
 	}
