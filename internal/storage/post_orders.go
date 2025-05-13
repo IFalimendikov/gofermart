@@ -10,7 +10,7 @@ import (
 func (s *Storage) PostOrders(ctx context.Context, userID, orderNum string) error {
 	var sUser string
 	var sNumber string
-	query := `SELECT user_id, order_id FROM orders WHERE number = $1`
+	query := `SELECT user_id, order_id FROM orders WHERE order_id = $1`
 	row := s.DB.QueryRowContext(ctx, query, orderNum)
 
 	err := row.Scan(&sUser, &sNumber)
