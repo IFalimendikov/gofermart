@@ -33,6 +33,7 @@ type Gofermart struct {
 func New(log *slog.Logger, cfg config.Config, storage *storage.Storage, client *resty.Client) (*Gofermart, error) {
 	service := Gofermart{
 		Log:     log,
+		cfg:     &cfg,
 		Storage: storage,
 		Client:  client,
 	}

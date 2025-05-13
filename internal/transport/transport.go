@@ -15,7 +15,6 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 type Service interface {
@@ -127,8 +126,10 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 			})
 
 			if err != nil {
-				c.String(http.StatusUnauthorized, "User ID not found!")
-				return
+				if claim.UserID == "" {
+					c.String(http.StatusUnauthorized, "User ID not found!")
+					return
+				}
 			} else if token.Valid {
 				UserID = claim.UserID
 				c.Set("user_id", UserID)
@@ -137,11 +138,11 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 			}
 		}
 
-		UserID = uuid.NewString()
+		UserID = c.ClientIP()
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
 			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60*time.Minute)),
 			},
 			UserID: UserID,
 		})
