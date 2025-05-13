@@ -15,7 +15,9 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
+	    "crypto/sha256"
+    "encoding/hex"
 )
 
 type Service interface {
@@ -139,7 +141,13 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 			}
 		}
 
-		UserID = uuid.NewString()
+		        clientIP := c.ClientIP()
+        userAgent := c.Request.UserAgent()
+        
+        // Create a unique hash from IP and UserAgent
+        h := sha256.New()
+        h.Write([]byte(clientIP + userAgent))
+        UserID = hex.EncodeToString(h.Sum(nil))[:32]
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
 			RegisteredClaims: jwt.RegisteredClaims{
