@@ -15,9 +15,7 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	// "github.com/google/uuid"
-	    "crypto/sha256"
-    "encoding/hex"
+	"github.com/google/uuid"
 )
 
 type Service interface {
@@ -129,10 +127,8 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 			})
 
 			if err != nil {
-				if claim.UserID == "" {
-					c.String(http.StatusUnauthorized, "User ID not found!")
-					return
-				}
+				c.String(http.StatusUnauthorized, "User ID not found!")
+				return
 			} else if token.Valid {
 				UserID = claim.UserID
 				c.Set("user_id", UserID)
@@ -141,17 +137,11 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 			}
 		}
 
-		        clientIP := c.ClientIP()
-        userAgent := c.Request.UserAgent()
-        
-        // Create a unique hash from IP and UserAgent
-        h := sha256.New()
-        h.Write([]byte(clientIP + userAgent))
-        UserID = hex.EncodeToString(h.Sum(nil))[:32]
+		UserID = uuid.NewString()
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
 			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60* time.Minute)),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
 			},
 			UserID: UserID,
 		})
