@@ -9,7 +9,7 @@ import (
 type Service interface {
 	Register(ctx context.Context, user models.User) error
 	Login(ctx context.Context, user models.User) error
-	Auth(ctx context.Context, userID string) error
+	// Auth(ctx context.Context, userID string) error
 	PostOrders(ctx context.Context, userID string, orderNum int) error
 	GetOrders(ctx context.Context, userID string) ([]models.Order, error)
 	GetBalance(ctx context.Context, userID string) (models.Balance, error)

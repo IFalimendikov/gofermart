@@ -2,25 +2,24 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"gofermart/internal/models"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func (s *Storage) Login(ctx context.Context, user models.User) error {
-	var query = `UPDATE users SET connected = true WHERE user_id = $1 AND login = $2 AND password = $3`
-	result, err := s.DB.ExecContext(ctx, query, user.ID, user.Login, user.Password)
-	if err != nil {
-		return err
-	}
+    checkQuery := `SELECT login FROM users WHERE login = $1 AND password = $2`
+    
+    var login string
+    err := s.DB.QueryRowContext(ctx, checkQuery, user.Login, user.Password).Scan(&login)
+    if err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return ErrWrongPassword
+        }
+        return err
+    }
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rows == 0 {
-		return ErrWrongPassword
-	}
-	return nil
+    return nil
 }

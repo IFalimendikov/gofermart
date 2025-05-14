@@ -8,8 +8,10 @@ import (
 	"gofermart/internal/storage"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func (h *Handler) Register(c *gin.Context, cfg config.Config) {
@@ -32,9 +34,6 @@ func (h *Handler) Register(c *gin.Context, cfg config.Config) {
 		return
 	}
 
-	userID := c.GetString("user_id")
-	user.ID = userID
-
 	err = h.Service.Register(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, storage.ErrDuplicateLogin) {
@@ -45,5 +44,21 @@ func (h *Handler) Register(c *gin.Context, cfg config.Config) {
 		return
 	}
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Login:    user.Login,
+		Password: user.Password,
+	})
+
+	signedToken, err := token.SignedString([]byte("123"))
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.SetCookie("jwt", signedToken, 24*3600, "/", "", false, true)
 	c.Status(http.StatusOK)
 }

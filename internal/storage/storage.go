@@ -29,7 +29,7 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 		return nil, ErrBadConn
 	}
 
-	var usersQuery = `CREATE TABLE IF NOT EXISTS users (user_id text PRIMARY KEY, login text UNIQUE, password text, connected bool DEFAULT false);`
+	var usersQuery = `CREATE TABLE IF NOT EXISTS users (login text PRIMARY KEY, password text);`
 	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (order_id text PRIMARY KEY, user_id text, status text, accrual integer, uploaded_at text);`
 	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals (order_id text PRIMARY KEY, user_id text, sum integer, processed_at text);`
 	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (user_id text PRIMARY KEY, current integer, withdrawn integer);`

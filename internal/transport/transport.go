@@ -4,7 +4,6 @@ import (
 	"context"
 	// "errors"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"gofermart/internal/config"
@@ -20,7 +19,7 @@ import (
 type Service interface {
 	Register(ctx context.Context, user models.User) error
 	Login(ctx context.Context, user models.User) error
-	Auth(ctx context.Context, userID string) error
+	// Auth(ctx context.Context, userID string) error
 	PostOrders(ctx context.Context, userID string, orderNum int) error
 	GetOrders(ctx context.Context, userID string) ([]models.Order, error)
 	GetBalance(ctx context.Context, userID string) (models.Balance, error)
@@ -36,7 +35,8 @@ type Transport struct {
 
 type Claim struct {
 	jwt.RegisteredClaims
-	UserID string
+	Login    string
+	Password string
 }
 
 func New(cfg *config.Config, h *handler.Handler, log *slog.Logger) *Transport {
@@ -64,7 +64,7 @@ func (t *Transport) NewRouter() *gin.Engine {
 	})
 
 	authorized := r.Group("api/user")
-	authorized.Use(t.withAuth())
+	authorized.Use(t.withCookies())
 
 	authorized.POST("/orders", func(c *gin.Context) {
 		t.Handler.PostOrders(c, *t.Config)
@@ -113,66 +113,37 @@ func (t *Transport) withLogging() gin.HandlerFunc {
 }
 
 func (t *Transport) withCookies() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var UserID string
-		if cookie, err := c.Cookie("jwt"); err == nil {
-			claim := &Claim{}
-			token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					c.String(http.StatusBadRequest, "Unexpected signing method!")
-					return nil, err
-				}
-				return []byte("123"), nil
-			})
+    return func(c *gin.Context) {
+        if cookie, err := c.Cookie("jwt"); err == nil {
+            claim := &Claim{}
+            token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (interface{}, error) {
+                if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+                    return nil, err
+                }
+                return []byte("123"), nil 
+            })
 
-			if err != nil {
-				if claim.UserID == "" {
-					c.String(http.StatusUnauthorized, "User ID not found!")
-					return
-				}
-			} else if token.Valid {
-				UserID = claim.UserID
-				c.Set("user_id", UserID)
-				c.Next()
-				return
-			}
-		}
-
-		UserID = c.ClientIP()
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().Add(60*time.Minute)),
-			},
-			UserID: UserID,
-		})
-
-		signedToken, err := token.SignedString([]byte("123"))
-		if err != nil {
-			slog.Error("failed to sign token",
-				"error", err,
-				"path", c.Request.URL.Path)
-			c.Next()
-			return
-		}
-
-		c.Set("user_id", UserID)
-		c.SetCookie("jwt", signedToken, 3600, "/", "", false, true)
-		c.Next()
+            if err == nil && token.Valid {
+                c.Set("login", claim.Login)
+                c.Set("password", claim.Password)
+                c.Next()
+            }
+        }
 	}
 }
 
-func (t *Transport) withAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// UserID := c.GetString("user_id")
+// func (t *Transport) withAuth() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		login := c.GetString("login")
+// 		password := c.GetString("password")
 
-		// err := t.Handler.Service.Auth(c.Request.Context(), UserID)
-		// if err != nil {
-		// 	if errors.Is(err, storage.ErrUnauthorized) {
-		// 		c.AbortWithStatus(401)
-		// 		return
-		// 	}
-		// }
-		c.Next()
-	}
-}
+// 		err := t.Handler.Service.Auth(c.Request.Context(), login, password)
+// 		if err != nil {
+// 			if errors.Is(err, storage.ErrUnauthorized) {
+// 				c.AbortWithStatus(401)
+// 				return
+// 			}
+// 		}
+// 		c.Next()
+// 	}
+// }

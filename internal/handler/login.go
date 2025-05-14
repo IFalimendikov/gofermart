@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"time"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 	"gofermart/internal/storage"
@@ -10,7 +11,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
+
+type Claim struct {
+	jwt.RegisteredClaims
+	Login    string
+	Password string
+}
 
 func (h *Handler) Login(c *gin.Context, cfg config.Config) {
 	var user models.User
@@ -32,9 +40,6 @@ func (h *Handler) Login(c *gin.Context, cfg config.Config) {
 		return
 	}
 
-	userID := c.GetString("user_id")
-	user.ID = userID
-
 	err = h.Service.Login(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, storage.ErrWrongPassword) {
@@ -45,5 +50,21 @@ func (h *Handler) Login(c *gin.Context, cfg config.Config) {
 		return
 	}
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claim{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Login:    user.Login,
+		Password: user.Password,
+	})
+
+	signedToken, err := token.SignedString([]byte("123"))
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.SetCookie("jwt", signedToken, 24*3600, "/", "", false, true)
 	c.Status(http.StatusOK)
 }
