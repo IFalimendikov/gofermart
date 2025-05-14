@@ -14,20 +14,13 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 
 	orders, err := h.Service.GetOrders(c.Request.Context(), userID)
 	if err != nil {
-		// switch{
 		if errors.Is(err, storage.ErrNoOrdersFound) {
 			c.JSON(http.StatusNoContent, "")
-			// c.Status(http.StatusNoContent)
 			return
 		} else {
 			c.JSON(http.StatusInternalServerError, "")
-			// c.Status(http.StatusNoContent)
 			return
 		}
-		// case errors.Is(err, storage.ErrNoOrdersFound):
-		// 	c.JSON(http.StatusNoContent, "")
-		// 	// c.Status(http.StatusNoContent)
-		// 	return
 	}
 	c.JSON(http.StatusOK, orders)
 }

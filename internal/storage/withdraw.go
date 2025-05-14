@@ -48,7 +48,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 		return accrual, err
 	}
 
-	var queryWihdraw = `INSERT into withdrawals (order, login, sum, processed_at) VALUES ($1, $2, $3, $4)`
+	var queryWihdraw = `INSERT into withdrawals (number, login, sum, processed_at) VALUES ($1, $2, $3, $4)`
 	stmtWihdraw, err := tx.PrepareContext(ctx, queryWihdraw)
 	if err != nil {
 		return accrual, err
