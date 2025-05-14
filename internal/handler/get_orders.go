@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
-	userID := c.GetString("user_id")
+	userID := c.GetString("login")
 
 	orders, err := h.Service.GetOrders(c.Request.Context(), userID)
 	if err != nil {
