@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-
+	"log"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -82,8 +82,10 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 }
 
 func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error {
+	log.Println("Starting UpdateOrders transaction")
 	tx, err := s.DB.Begin()
 	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
 		return err
 	}
 	defer tx.Rollback()
@@ -91,6 +93,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE number = $3`
 	stmtOrdr, err := tx.PrepareContext(ctx, queryOrdr)
 	if err != nil {
+		log.Printf("Failed to prepare order update statement: %v", err)
 		return err
 	}
 	defer stmtOrdr.Close()
@@ -98,27 +101,35 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
 	stmtBal, err := tx.PrepareContext(ctx, queryBal)
 	if err != nil {
+		log.Printf("Failed to prepare balance update statement: %v", err)
 		return err
 	}
 	defer stmtBal.Close()
 
 	for _, order := range orders {
+		log.Printf("Updating order: %v", order.Order)
 		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
 		if err != nil {
+			log.Printf("Failed to update order %v: %v", order.Order, err)
 			return err
 		}
 		if order.Accrual != 0 {
+			log.Printf("Updating balance for order: %v", order.Order)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
+				log.Printf("Failed to update balance for order %v: %v", order.Order, err)
 				return err
 			}
 		}
 	}
+
 	err = tx.Commit()
 	if err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
 		return err
 	}
 
+	log.Println("Successfully updated orders and committed transaction")
 	return nil
 }
 
