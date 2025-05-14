@@ -64,9 +64,6 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 				}
 				orders = append(orders, order)
 			}
-
-			fmt.Println("ORders")
-			fmt.Println(orders)
 			
 			err = s.updateStatus(ctx, orders)
 			if err != nil {
@@ -99,6 +96,7 @@ func (s *Gofermart) getStatus(ctx context.Context, orderOld models.Order) (model
 	if order.Status == orderOld.Status {
 		return order, err
 	}
+	order.Order = orderOld.Order
 	return order, nil
 }
 
