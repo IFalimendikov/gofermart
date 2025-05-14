@@ -18,7 +18,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	}
 	defer tx.Rollback()
 
-	var queryBal = `SELECT current FROM balances WHERE user_id = $1`
+	var queryBal = `SELECT current FROM balances WHERE login = $1`
 	stmtBal, err := tx.PrepareContext(ctx, queryBal)
 	if err != nil {
 		return accrual, err
@@ -36,7 +36,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 		return accrual, ErrBalanceTooLow
 	}
 
-	var queryNewBal = `UPDATE balances SET current = current - $1, withdrawn = withdrawn + $2 WHERE user_id = $3`
+	var queryNewBal = `UPDATE balances SET current = current - $1, withdrawn = withdrawn + $2 WHERE login = $3`
 	stmtNewBal, err := tx.PrepareContext(ctx, queryNewBal)
 	if err != nil {
 		return accrual, err
@@ -48,7 +48,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 		return accrual, err
 	}
 
-	var queryWihdraw = `INSERT into withdrawals (order, user_id, sum, processed_at) VALUES ($1, $2, $3, $4)`
+	var queryWihdraw = `INSERT into withdrawals (order, login, sum, processed_at) VALUES ($1, $2, $3, $4)`
 	stmtWihdraw, err := tx.PrepareContext(ctx, queryWihdraw)
 	if err != nil {
 		return accrual, err
@@ -60,7 +60,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 		return accrual, err
 	}
 
-	var queryAccrual = `SELECT current, withdrawn FROM balances WHERE user_id = $1`
+	var queryAccrual = `SELECT current, withdrawn FROM balances WHERE login = $1`
 	stmtAccrual, err := tx.PrepareContext(ctx, queryAccrual)
 	if err != nil {
 		return accrual, err

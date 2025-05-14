@@ -6,7 +6,7 @@ type User struct {
 }
 
 type Order struct {
-	ID         string  `json:"user_id,omitempty"`
+	ID         string  `json:"login,omitempty"`
 	Order      string  `json:"number"`
 	Status     string  `json:"status"`
 	Accrual    float64 `json:"accrual,omitempty"`
@@ -14,13 +14,13 @@ type Order struct {
 }
 
 type Balance struct {
-	ID        string `json:"user_id"`
+	ID        string `json:"login"`
 	Current   int    `json:"current"`
 	Withdrawn int    `json:"withdrawn"`
 }
 
 type Withdrawal struct {
-	ID          string `json:"user_id"`
+	ID          string `json:"login"`
 	Order       string `json:"order"`
 	Sum         int    `json:"sum"`
 	ProcessedAt string `json:"processed_at"`

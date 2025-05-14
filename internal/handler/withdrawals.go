@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handler) Withdrawals(c *gin.Context, cfg config.Config) {
-	userID := c.GetString("user_id")
+	userID := c.GetString("login")
 	
 	withdrawals, err := h.Service.Withdrawals(c.Request.Context(), userID)
 	if err != nil {

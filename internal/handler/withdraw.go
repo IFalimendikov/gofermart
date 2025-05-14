@@ -34,7 +34,7 @@ func (h *Handler) Withdraw(c *gin.Context, cfg config.Config) {
 		return
 	}
 
-	userID := c.GetString("user_id")
+	userID := c.GetString("login")
 	withdrawal.ID = userID
 	
 	balance, err = h.Service.Withdraw(c.Request.Context(), withdrawal)

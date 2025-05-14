@@ -9,7 +9,7 @@ import (
 
 func (s *Storage) GetBalance(ctx context.Context, userID string) (models.Balance, error) {
 	var balance models.Balance
-	query := `SELECT user_id, current, withdrawn FROM balances WHERE user_id = $1`
+	query := `SELECT login, current, withdrawn FROM balances WHERE login = $1`
 	row  := s.DB.QueryRowContext(ctx, query, userID)
 	
 	err := row.Scan(&balance) 
