@@ -62,6 +62,7 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 					slog.Error("failed to get status", "error", err)
 					continue
 				}
+				order.ID = orderOld.ID
 				orders = append(orders, order)
 			}
 			
