@@ -12,15 +12,16 @@ import (
 func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 	userID := c.GetString("user_id")
 
-    orders, err := h.Service.GetOrders(c.Request.Context(), userID)
-    if err != nil {
-        if errors.Is(err, storage.ErrNoOrdersFound) {
-            c.Status(http.StatusNoContent) // 204 если нет заказов
-            return
-        }
-        c.Status(http.StatusInternalServerError) // 500 для других ошибок
-        return
-    }
-	    c.Header("Content-Type", "application/json")
-    c.JSON(http.StatusOK, orders)
+	orders, err := h.Service.GetOrders(c.Request.Context(), userID)
+	if err != nil {
+		switch{
+		case errors.Is(err, storage.ErrNoOrdersFound):
+			c.Status(http.StatusNoContent)
+			return
+		default:
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+	}
+	c.JSON(http.StatusAccepted, orders)
 }
