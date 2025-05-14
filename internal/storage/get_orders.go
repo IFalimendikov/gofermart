@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"time"
+	"log"
 
 	"gofermart/internal/models"
 
@@ -12,10 +14,19 @@ import (
 func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order, error) {
 	orders := make([]models.Order, 0)
 	query := `SELECT order_id, status, accrual, uploaded_at FROM orders WHERE login = $1 ORDER BY uploaded_at DESC`
-	rows, err := s.DB.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
+	    start := time.Now()
+    
+    // Log DB query start
+    log.Printf("Starting DB query for user %s", userID)
+    
+    rows, err := s.DB.Query(query, userID)
+    if err != nil {
+        log.Printf("DB query error: %v", err)
+        return nil, err
+    }
+    
+    // Log query execution time
+    log.Printf("DB query took: %v", time.Since(start))
 	defer rows.Close()
 
 	for rows.Next() {
