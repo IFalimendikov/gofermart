@@ -2,7 +2,7 @@ package transport
 
 import (
 	"context"
-	"errors"
+	// "errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -10,7 +10,7 @@ import (
 	"gofermart/internal/config"
 	"gofermart/internal/handler"
 	"gofermart/internal/models"
-	"gofermart/internal/storage"
+	// "gofermart/internal/storage"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -164,15 +164,15 @@ func (t *Transport) withCookies() gin.HandlerFunc {
 
 func (t *Transport) withAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		UserID := c.GetString("user_id")
+		// UserID := c.GetString("user_id")
 
-		err := t.Handler.Service.Auth(c.Request.Context(), UserID)
-		if err != nil {
-			if errors.Is(err, storage.ErrUnauthorized) {
-				c.AbortWithStatus(401)
-				return
-			}
-		}
+		// err := t.Handler.Service.Auth(c.Request.Context(), UserID)
+		// if err != nil {
+		// 	if errors.Is(err, storage.ErrUnauthorized) {
+		// 		c.AbortWithStatus(401)
+		// 		return
+		// 	}
+		// }
 		c.Next()
 	}
 }
