@@ -20,13 +20,13 @@ func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order,
 
 	for rows.Next() {
 		var order models.Order
-		var accrual sql.NullInt64
+		var accrual sql.NullFloat64
 		err := rows.Scan(&order.Order, &order.Status, &accrual, &order.UploadedAt)
 		if err != nil {
 			return nil, err
 		}
 		if accrual.Valid {
-			order.Accrual = int(accrual.Int64)
+			order.Accrual = accrual.Float64
 		}
 		orders = append(orders, order)
 	}
