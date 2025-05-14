@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-
+	"fmt"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -108,6 +108,8 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 			return err
 		}
 		if order.Accrual != 0 {
+					fmt.Println("add accrual")
+					fmt.Println(order.Accrual)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
