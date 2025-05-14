@@ -2,8 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
-
 	"gofermart/internal/models"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
