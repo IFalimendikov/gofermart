@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (models.Balance, error) {
-	var balance int
+	var balance float64
 	var accrual models.Balance
 
 	tx, err := s.DB.Begin()
