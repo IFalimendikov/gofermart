@@ -12,7 +12,7 @@ func (h *Handler) GetBalance(c *gin.Context, cfg config.Config) {
 
 	balance, err := h.Service.GetBalance(c.Request.Context(), userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, "")
+		c.JSON(http.StatusNoContent, "")
 		return
 	}
 	c.JSON(http.StatusOK, balance)
