@@ -7,8 +7,8 @@ type User struct {
 }
 
 type Order struct {
-	ID         string `json:"user_id"`
-	Order      string `json:"order"`
+	ID         string `json:"user_id,omitempty"`
+	Order      string `json:"number"`
 	Status     string `json:"status"`
 	Accrual    int    `json:"accrual,omitempty"`
 	UploadedAt string `json:"uploaded_at"`
