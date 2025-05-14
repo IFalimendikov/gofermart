@@ -114,22 +114,29 @@ func (t *Transport) withLogging() gin.HandlerFunc {
 
 func (t *Transport) withCookies() gin.HandlerFunc {
     return func(c *gin.Context) {
-        if cookie, err := c.Cookie("jwt"); err == nil {
-            claim := &Claim{}
-            token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (interface{}, error) {
-                if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-                    return nil, err
-                }
-                return []byte("123"), nil 
-            })
-
-            if err == nil && token.Valid {
-                c.Set("login", claim.Login)
-                c.Set("password", claim.Password)
-                c.Next()
-            }
+        cookie, err := c.Cookie("jwt")
+        if err != nil {
+            c.AbortWithStatus(401)
+            return
         }
-	}
+
+        claim := &Claim{}
+        token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (any, error) {
+            if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+                return nil, err
+            }
+            return []byte("123"), nil 
+        })
+
+        if err != nil || !token.Valid {
+            c.AbortWithStatus(401)
+            return
+        }
+
+        c.Set("login", claim.Login)
+        c.Set("password", claim.Password)
+        c.Next()
+    }
 }
 
 // func (t *Transport) withAuth() gin.HandlerFunc {
