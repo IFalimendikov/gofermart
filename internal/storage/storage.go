@@ -30,9 +30,9 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 	}
 
 	var usersQuery = `CREATE TABLE IF NOT EXISTS users (login text PRIMARY KEY, password text);`
-	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (number text PRIMARY KEY, login text, status text, accrual FLOAT, uploaded_at text);`
-	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals ("order" text PRIMARY KEY, login text, sum FLOAT, processed_at text);`
-	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (login text PRIMARY KEY, current FLOAT, withdrawn FLOAT);`
+	var ordersQuery = `CREATE TABLE IF NOT EXISTS orders (number text PRIMARY KEY, login text, status text, accrual FLOAT DEFAULT 0, uploaded_at text);`
+	var withdrawalsQuery = `CREATE TABLE IF NOT EXISTS withdrawals ("order" text PRIMARY KEY, login text, sum FLOAT DEFAULT 0, processed_at text);`
+	var balancesQuery = `CREATE TABLE IF NOT EXISTS balances (login text PRIMARY KEY, current FLOAT DEFAULT 0, withdrawn FLOAT DEFAULT 0);`
 
 	tables := []string{usersQuery, ordersQuery, withdrawalsQuery, balancesQuery}
 
