@@ -2,8 +2,10 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 
 	"gofermart/internal/models"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -18,9 +20,13 @@ func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order,
 
 	for rows.Next() {
 		var order models.Order
-		err := rows.Scan(&order.Order, &order.Status, &order.Accrual, &order.UploadedAt)
+		var accrual sql.NullInt64
+		err := rows.Scan(&order.Order, &order.Status, &accrual, &order.UploadedAt)
 		if err != nil {
 			return nil, err
+		}
+		if accrual.Valid {
+			order.Accrual = int(accrual.Int64)
 		}
 		orders = append(orders, order)
 	}
