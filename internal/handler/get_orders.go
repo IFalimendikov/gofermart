@@ -19,6 +19,11 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 			c.JSON(http.StatusNoContent, "")
 			// c.Status(http.StatusNoContent)
 			return
+		default:
+			c.JSON(http.StatusInternalServerError, "")
+			// c.Status(http.StatusBadRequest)
+			return
+		}
 	}
 	c.JSON(http.StatusAccepted, orders)
 }
