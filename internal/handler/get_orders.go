@@ -14,16 +14,16 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 
 	orders, err := h.Service.GetOrders(c.Request.Context(), userID)
 	if err != nil {
-		switch{
-		case errors.Is(err, storage.ErrNoOrdersFound):
-			c.JSON(http.StatusNoContent, "")
+		// switch{
+		if errors.Is(err, storage.ErrNoOrdersFound) {
+						c.JSON(http.StatusNoContent, "")
 			// c.Status(http.StatusNoContent)
 			return
-		default:
-			c.JSON(http.StatusInternalServerError, "")
-			// c.Status(http.StatusBadRequest)
-			return
 		}
+		// case errors.Is(err, storage.ErrNoOrdersFound):
+		// 	c.JSON(http.StatusNoContent, "")
+		// 	// c.Status(http.StatusNoContent)
+		// 	return
 	}
 	c.JSON(http.StatusAccepted, orders)
 }
