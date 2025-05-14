@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 	"gofermart/internal/service"
