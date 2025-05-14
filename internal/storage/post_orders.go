@@ -10,7 +10,7 @@ import (
 func (s *Storage) PostOrders(ctx context.Context, userID, orderNum string) error {
 	var sUser string
 	var sNumber string
-	query := `SELECT login, order_id FROM orders WHERE order_id = $1`
+	query := `SELECT login, number FROM orders WHERE number = $1`
 	row := s.DB.QueryRowContext(ctx, query, orderNum)
 
 	row.Scan(&sUser, &sNumber)
@@ -22,7 +22,7 @@ func (s *Storage) PostOrders(ctx context.Context, userID, orderNum string) error
 		return ErrDuplicateNumber
 	}
 
-	query = `INSERT into orders (order_id, login, status, uploaded_at) VALUES ($1, $2, $3, $4)`
+	query = `INSERT into orders (number, login, status, uploaded_at) VALUES ($1, $2, $3, $4)`
 	_, err := s.DB.ExecContext(ctx, query, orderNum, userID, "NEW", time.Now().Format(time.RFC3339))
 	if err != nil {
 		return err
