@@ -103,7 +103,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	defer stmtBal.Close()
 
 	for _, order := range orders {
-		_, err := stmtOrdr.ExecContext(ctx, order.Status, 729.98, order.Order)
+		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 					fmt.Println(order.Accrual)
 					fmt.Println(order.ID)
 					fmt.Println(order.Order)
-			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
+			_, err = stmtBal.ExecContext(ctx, 729.98, order.ID)
 			if err != nil {
 				return err
 			}
