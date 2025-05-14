@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"database/sql"
+	"fmt"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 
@@ -108,14 +108,22 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 			return err
 		}
 		if order.Accrual != 0 {
-					fmt.Println("add accrual")
-					fmt.Println(order.Accrual)
-					fmt.Println(order.ID)
-					fmt.Println(order.Order)
+			fmt.Println("add accrual")
+			fmt.Println(order.Accrual)
+			fmt.Println(order.ID)
+			fmt.Println(order.Order)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
 			}
+
+			var currentBalance float64
+			balanceQuery := `SELECT current FROM balances WHERE login = $1`
+			err = s.DB.QueryRowContext(ctx, balanceQuery, order.ID).Scan(&currentBalance)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Updated balance for user %s: %.2f\n", order.ID, currentBalance)
 		}
 	}
 	err = tx.Commit()
