@@ -12,7 +12,7 @@ import (
 func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order, error) {
 	orders := make([]models.Order, 0)
 	query := `SELECT order_id, status, accrual, uploaded_at FROM orders WHERE login = $1 ORDER BY uploaded_at DESC`
-	rows, err := s.DB.QueryContext(ctx, query, userID)
+	rows, err := s.DB.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
