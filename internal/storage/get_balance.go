@@ -16,11 +16,11 @@ func (s *Storage) GetBalance(ctx context.Context, userID string) (models.Balance
 	
 	err := row.Scan(&balance) 
 	if err != nil {
+			fmt.Println("balance is")
+	fmt.Println(err)
 		return balance, err
 	}
 
-	fmt.Println("balance is")
-	fmt.Println(balance)
 
 	return balance, nil
 }
