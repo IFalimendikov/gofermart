@@ -116,7 +116,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 					fmt.Println(order.Accrual)
 					fmt.Println(order.ID)
 					fmt.Println(order.Order)
-			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
+			_, err = stmtBal.ExecContext(ctx, order.ID, order.Accrual)
 			if err != nil {
 				return err
 			}
