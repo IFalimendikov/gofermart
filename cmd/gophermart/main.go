@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Error("Error creating new gofermart service", "error", err)
 	}
-	go s.UpdateOrders(ctx)
+	// go s.UpdateOrders(ctx)
 
 	h := handler.New(s, log)
 
