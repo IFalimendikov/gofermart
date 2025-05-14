@@ -66,7 +66,6 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 			}
 			
 			err = s.updateStatus(ctx, orders)
-			fmt.Println("found update orders")
 			if err != nil {
 				slog.Error("failed to update orders", "error", err)
 				continue

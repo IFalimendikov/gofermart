@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"log"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -81,45 +82,62 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 }
 
 func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error {
-	tx ,err := s.DB.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+    log.Printf("Starting to update %d orders", len(orders))
+    
+    tx, err := s.DB.Begin()
+    if err != nil {
+        log.Printf("Error beginning transaction: %v", err)
+        return err
+    }
+    defer tx.Rollback()
 
-	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE order_id = $3`
-	stmtOrdr, err := tx.PrepareContext(ctx, queryOrdr)
-	if err != nil {
-		return err
-	}
-	defer stmtOrdr.Close()
+    var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE order_id = $3`
+    stmtOrdr, err := tx.PrepareContext(ctx, queryOrdr)
+    if err != nil {
+        log.Printf("Error preparing order statement: %v", err)
+        return err
+    }
+    defer stmtOrdr.Close()
 
-	var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
-	stmtBal, err := tx.PrepareContext(ctx, queryBal)
-	if err != nil {
-		return err
-	}
-	defer stmtBal.Close()
+    var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
+    stmtBal, err := tx.PrepareContext(ctx, queryBal)
+    if err != nil {
+        log.Printf("Error preparing balance statement: %v", err)
+        return err
+    }
+    defer stmtBal.Close()
 
-	
-	for _, order := range orders {
-		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
-		if err != nil {
-			return err
-		}
-		if order.Accrual != 0 {
-			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
+    for _, order := range orders {
+        log.Printf("Updating order: ID=%s, Status=%s, Accrual=%d", 
+            order.Order, order.Status, order.Accrual)
+            
+        _, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
+        if err != nil {
+            log.Printf("Error updating order %s: %v", order.Order, err)
+            return err
+        }
 
-	return nil
+        if order.Accrual != 0 {
+            log.Printf("Updating balance for user %s with accrual %d", 
+                order.ID, order.Accrual)
+                
+            _, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
+            if err != nil {
+                log.Printf("Error updating balance for user %s: %v", 
+                    order.ID, err)
+                return err
+            }
+        }
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        log.Printf("Error committing transaction: %v", err)
+        return err
+    }
+
+    log.Printf("Successfully updated all orders and balances")
+    return nil
 }
 
 // func (s *Storage) Drop(ctx context.Context) error {
