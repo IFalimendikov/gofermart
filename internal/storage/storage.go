@@ -123,26 +123,26 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	return nil
 }
 
-func (s *Storage) Drop(ctx context.Context) error {
-    tx, err := s.DB.Begin()
-    if err != nil {
-        return err
-    }
-    defer tx.Rollback()
+// func (s *Storage) Drop(ctx context.Context) error {
+//     tx, err := s.DB.Begin()
+//     if err != nil {
+//         return err
+//     }
+//     defer tx.Rollback()
 
-    tables := []string{
-        "DROP TABLE IF EXISTS withdrawals",
-        "DROP TABLE IF EXISTS orders",
-        "DROP TABLE IF EXISTS balances",
-        "DROP TABLE IF EXISTS users",
-    }
+//     tables := []string{
+//         "DROP TABLE IF EXISTS withdrawals",
+//         "DROP TABLE IF EXISTS orders",
+//         "DROP TABLE IF EXISTS balances",
+//         "DROP TABLE IF EXISTS users",
+//     }
 
-    for _, query := range tables {
-        _, err = tx.ExecContext(ctx, query)
-        if err != nil {
-            return err
-        }
-    }
+//     for _, query := range tables {
+//         _, err = tx.ExecContext(ctx, query)
+//         if err != nil {
+//             return err
+//         }
+//     }
 
-    return tx.Commit()
-}
+//     return tx.Commit()
+// }
