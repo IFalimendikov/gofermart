@@ -41,7 +41,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	}
 
 	_, err = tx.ExecContext(ctx,
-		`UPDATE balances SET current = current - $1, withdrawn $2 WHERE login = $3`,
+		`UPDATE balances SET current = current - $1, withdrawn = $2 WHERE login = $3`,
 		withdrawal.Sum, withdrawal.Sum, withdrawal.ID)
 	if err != nil {
 		log.Printf("Failed to update balance for user %s: %v", withdrawal.ID, err)
