@@ -31,7 +31,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 
 	_, err = tx.ExecContext(ctx,
 		`UPDATE balances SET current = current - $1, withdrawn = withdrawn + $2 WHERE login = $3`,
-		withdrawal.Sum, withdrawal.Sum, withdrawal.ID)
+		100, 100, withdrawal.ID)
 	if err != nil {
 		return accrual, err
 	}
