@@ -54,7 +54,7 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 
 func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 	orders := make([]models.Order, 0)
-	var query = `SELECT number, status FROM orders WHERE status = $1 OR status = $2`
+	var query = `SELECT number, login, status FROM orders WHERE status = $1 OR status = $2`
 	stmt, err := s.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 
 	for rows.Next() {
 		var order models.Order
-		err = rows.Scan(&order.Order, &order.Status)
+		err = rows.Scan(&order.Order, &order.ID, &order.Status)
 		if err != nil {
 			return nil, err
 		}
