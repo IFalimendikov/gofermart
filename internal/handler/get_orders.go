@@ -16,7 +16,7 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 	if err != nil {
 		// switch{
 		if errors.Is(err, storage.ErrNoOrdersFound) {
-						c.JSON(http.StatusNoContent, "")
+			c.JSON(http.StatusNoContent, "")
 			// c.Status(http.StatusNoContent)
 			return
 		}
@@ -25,5 +25,5 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 		// 	// c.Status(http.StatusNoContent)
 		// 	return
 	}
-	c.JSON(http.StatusAccepted, orders)
+	c.JSON(http.StatusOK, orders)
 }
