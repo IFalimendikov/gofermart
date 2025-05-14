@@ -37,7 +37,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	}
 
 	_, err = tx.ExecContext(ctx,
-		`INSERT into withdrawals (order, login, sum, processed_at) VALUES ($1, $2, $3, $4)`,
+		`INSERT into withdrawals ("order", login, sum, processed_at) VALUES ($1, $2, $3, $4)`,
 		withdrawal.Order, withdrawal.ID, withdrawal.Sum, time.Now().Format(time.RFC3339))
 	if err != nil {
 		return accrual, err

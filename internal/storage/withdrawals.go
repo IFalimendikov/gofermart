@@ -10,7 +10,7 @@ import (
 func (s *Storage) Withdrawals(ctx context.Context, userID string) ([]models.Withdrawal, error) {
 	var withdrawals []models.Withdrawal
 
-	var query = `SELECT order, sum, processed_at FROM withdrawals WHERE login = $1 ORDER BY processed_at DESC`
+	var query = `SELECT "order", sum, processed_at FROM withdrawals WHERE login = $1 ORDER BY processed_at DESC`
 	stmt, err := s.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return nil, err
