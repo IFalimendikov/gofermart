@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -108,10 +107,6 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 			return err
 		}
 		if order.Accrual != 0 {
-					fmt.Println("add accrual")
-					fmt.Println(order.Accrual)
-					fmt.Println(order.ID)
-					fmt.Println(order.Order)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
@@ -125,27 +120,3 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 
 	return nil
 }
-
-// func (s *Storage) Drop(ctx context.Context) error {
-//     tx, err := s.DB.Begin()
-//     if err != nil {
-//         return err
-//     }
-//     defer tx.Rollback()
-
-//     tables := []string{
-//         "DROP TABLE IF EXISTS withdrawals",
-//         "DROP TABLE IF EXISTS orders",
-//         "DROP TABLE IF EXISTS balances",
-//         "DROP TABLE IF EXISTS users",
-//     }
-
-//     for _, query := range tables {
-//         _, err = tx.ExecContext(ctx, query)
-//         if err != nil {
-//             return err
-//         }
-//     }
-
-//     return tx.Commit()
-// }

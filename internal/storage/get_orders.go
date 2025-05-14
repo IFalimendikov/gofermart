@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"gofermart/internal/models"
 
@@ -37,17 +36,6 @@ func (s *Storage) GetOrders(ctx context.Context, userID string) ([]models.Order,
 
     if err = rows.Err(); err != nil {
         return nil, err
-    }
-
-    // Print orders to console
-    fmt.Printf("Found %d orders for user %s:\n", len(orders), userID)
-    for i, order := range orders {
-        fmt.Printf("Order %d:\n", i+1)
-        fmt.Printf("  Order Number: %s\n", order.Order)
-        fmt.Printf("  Status: %s\n", order.Status)
-        fmt.Printf("  Accrual: %.2f\n", order.Accrual)
-        fmt.Printf("  Uploaded At: %s\n", order.UploadedAt)
-        fmt.Println()
     }
 
     return orders, nil

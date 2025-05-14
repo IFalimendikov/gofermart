@@ -137,19 +137,3 @@ func (t *Transport) withCookies() gin.HandlerFunc {
         c.Next()
     }
 }
-
-// func (t *Transport) withAuth() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		login := c.GetString("login")
-// 		password := c.GetString("password")
-
-// 		err := t.Handler.Service.Auth(c.Request.Context(), login, password)
-// 		if err != nil {
-// 			if errors.Is(err, storage.ErrUnauthorized) {
-// 				c.AbortWithStatus(401)
-// 				return
-// 			}
-// 		}
-// 		c.Next()
-// 	}
-// }
