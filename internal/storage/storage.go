@@ -95,7 +95,11 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer stmtOrdr.Close()
 
-	var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
+	var queryBal = `
+    INSERT INTO balances (login, current, withdrawn) 
+    VALUES ($1, $2, 0) 
+    ON CONFLICT (login) 
+    DO UPDATE SET current = balances.current + $2`
 	stmtBal, err := tx.PrepareContext(ctx, queryBal)
 	if err != nil {
 		return err
