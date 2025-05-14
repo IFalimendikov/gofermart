@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"database/sql"
+	"fmt"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 
@@ -95,11 +95,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer stmtOrdr.Close()
 
-	var queryBal = `
-    INSERT INTO balances (login, current, withdrawn) 
-    VALUES ($1, $2, 0) 
-    ON CONFLICT (login) 
-    DO UPDATE SET current = balances.current + $2`
+	var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
 	stmtBal, err := tx.PrepareContext(ctx, queryBal)
 	if err != nil {
 		return err
@@ -112,14 +108,21 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 			return err
 		}
 		if order.Accrual != 0 {
-					fmt.Println("add accrual")
-					fmt.Println(order.Accrual)
-					fmt.Println(order.ID)
-					fmt.Println(order.Order)
-			_, err = stmtBal.ExecContext(ctx, order.ID, order.Accrual)
+			fmt.Println("add accrual")
+			fmt.Println(order.Accrual)
+			fmt.Println(order.ID)
+			fmt.Println(order.Order)
+			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
 			}
+
+			var currentBalance float64
+			err = tx.QueryRowContext(ctx, `SELECT current FROM balances WHERE login = $1`, order.ID).Scan(&currentBalance)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("New balance for user %s: %f\n", order.ID, currentBalance)
 		}
 	}
 	err = tx.Commit()
