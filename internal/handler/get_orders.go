@@ -16,10 +16,12 @@ func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
 	if err != nil {
 		switch{
 		case errors.Is(err, storage.ErrNoOrdersFound):
-			c.Status(http.StatusNoContent)
+			c.JSON(http.StatusNoContent, "")
+			// c.Status(http.StatusNoContent)
 			return
 		default:
-			c.Status(http.StatusInternalServerError)
+			c.JSON(http.StatusBadRequest, "")
+			// c.Status(http.StatusBadRequest)
 			return
 		}
 	}
