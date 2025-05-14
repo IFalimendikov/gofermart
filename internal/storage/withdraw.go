@@ -13,7 +13,9 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	var balance sql.NullFloat64
 	var accrual models.Balance
 
-	tx, err := s.DB.Begin()
+	tx, err := s.DB.BeginTx(ctx, &sql.TxOptions{
+    Isolation: sql.LevelSerializable,
+})
 	if err != nil {
 		return accrual, err
 	}
@@ -28,10 +30,9 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	if !balance.Valid || balance.Float64 < withdrawal.Sum {
 		return accrual, ErrBalanceTooLow
 	}
-
 	_, err = tx.ExecContext(ctx,
 		`UPDATE balances SET current = current - $1, withdrawn = withdrawn + $2 WHERE login = $3`,
-		100, 100, withdrawal.ID)
+		withdrawal.Sum, withdrawal.Sum, withdrawal.ID)
 	if err != nil {
 		return accrual, err
 	}
