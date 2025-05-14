@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"database/sql"
+	"log"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -52,32 +53,43 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 }
 
 func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
-	orders := make([]models.Order, 0)
-	var query = `SELECT order_id, status FROM orders WHERE status = $1 OR status = $2`
-	stmt, err := s.DB.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
+    log.Printf("Starting to fetch orders with NEW or PROCESSING status")
+    
+    orders := make([]models.Order, 0)
+    var query = `SELECT order_id, status FROM orders WHERE status = $1 OR status = $2`
+    
+    stmt, err := s.DB.PrepareContext(ctx, query)
+    if err != nil {
+        log.Printf("Error preparing statement: %v", err)
+        return nil, err
+    }
+    defer stmt.Close()
 
-	rows, err := stmt.QueryContext(ctx, "NEW", "PROCESSING")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+    rows, err := stmt.QueryContext(ctx, "NEW", "PROCESSING")
+    if err != nil {
+        log.Printf("Error executing query: %v", err)
+        return nil, err
+    }
+    defer rows.Close()
 
-	for rows.Next() {
-		var order models.Order
-		err = rows.Scan(&order.Order, &order.Status)
-		if err != nil {
-			return nil, err
-		}
-		orders = append(orders, order)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return orders, nil
+    for rows.Next() {
+        var order models.Order
+        err = rows.Scan(&order.Order, &order.Status)
+        if err != nil {
+            log.Printf("Error scanning row: %v", err)
+            return nil, err
+        }
+        log.Printf("Found order: ID=%s, Status=%s", order.Order, order.Status)
+        orders = append(orders, order)
+    }
+    
+    if err = rows.Err(); err != nil {
+        log.Printf("Error iterating rows: %v", err)
+        return nil, err
+    }
+
+    log.Printf("Successfully fetched %d orders", len(orders))
+    return orders, nil
 }
 
 func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error {
