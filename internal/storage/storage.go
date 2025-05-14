@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"database/sql"
 	"gofermart/internal/config"
@@ -82,13 +83,22 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 }
 
 func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error {
-	log.Println("Starting UpdateOrders transaction")
-	tx, err := s.DB.Begin()
-	if err != nil {
-		log.Printf("Failed to begin transaction: %v", err)
-		return err
-	}
-	defer tx.Rollback()
+	    log.Println("Starting UpdateOrders transaction")
+    
+    // Add validation
+    if len(orders) == 0 {
+        return fmt.Errorf("no orders provided for update")
+    }
+
+    // Log the entire orders slice for debugging
+    log.Printf("Received orders for update: %+v", orders)
+
+    tx, err := s.DB.Begin()
+    if err != nil {
+        log.Printf("Failed to begin transaction: %v", err)
+        return err
+    }
+    defer tx.Rollback()
 
 	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE number = $3`
 	stmtOrdr, err := tx.PrepareContext(ctx, queryOrdr)
@@ -106,22 +116,28 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer stmtBal.Close()
 
-	for _, order := range orders {
-		log.Printf("Updating order: %v", order.Order)
-		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
-		if err != nil {
-			log.Printf("Failed to update order %v: %v", order.Order, err)
-			return err
-		}
-		if order.Accrual != 0 {
-			log.Printf("Updating balance for order: %v", order.Order)
-			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
-			if err != nil {
-				log.Printf("Failed to update balance for order %v: %v", order.Order, err)
-				return err
-			}
-		}
-	}
+    for _, order := range orders {
+        // Validate each order
+        if order.Order == "" {
+            log.Printf("Warning: Empty order number detected: %+v", order)
+            continue
+        }
+
+        log.Printf("Updating order: %+v", order) // Log complete order object
+        _, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
+        if err != nil {
+            log.Printf("Failed to update order %v: %v", order.Order, err)
+            return err
+        }
+        if order.Accrual != 0 {
+            log.Printf("Updating balance for order %s with accrual %d", order.Order, order.Accrual)
+            _, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
+            if err != nil {
+                log.Printf("Failed to update balance for order %v: %v", order.Order, err)
+                return err
+            }
+        }
+    }
 
 	err = tx.Commit()
 	if err != nil {
