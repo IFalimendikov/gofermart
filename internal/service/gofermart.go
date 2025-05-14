@@ -46,8 +46,6 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 
 	for {
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
 		case <-ticker.C:
 			var orders []models.Order
 			ordersOld, err := s.getOrders(ctx)
