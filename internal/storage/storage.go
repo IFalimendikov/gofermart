@@ -87,7 +87,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer tx.Rollback()
 
-	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE order = $3`
+	var queryOrdr = `UPDATE orders SET status = $1, accrual = $2 WHERE order_id = $3`
 	stmtOrdr, err := s.DB.PrepareContext(ctx, queryOrdr)
 	if err != nil {
 		return err

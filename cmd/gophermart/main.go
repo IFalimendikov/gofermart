@@ -27,8 +27,8 @@ func main() {
 	if err != nil {
 		log.Error("Error creating new storage", "error", err)
 	}
-	defer store.DB.Close()
 	defer store.Drop(ctx)
+	defer store.DB.Close()
 
 	client := resty.New()
 
