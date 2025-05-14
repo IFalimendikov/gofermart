@@ -32,7 +32,7 @@ func (h *Handler) PostOrders(c *gin.Context, cfg config.Config) {
 		return
 	}
 
-	userID := c.GetString("user_id")
+	userID := c.GetString("login")
 
 	err = h.Service.PostOrders(c.Request.Context(), userID, orderNum)
 	if err != nil {
