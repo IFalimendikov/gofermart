@@ -95,29 +95,32 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer stmtOrdr.Close()
 
-	var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2`
-	stmtBal, err := tx.PrepareContext(ctx, queryBal)
-	if err != nil {
-		return err
-	}
-	defer stmtBal.Close()
+var queryBal = `UPDATE balances SET current = current + $1 WHERE login = $2 RETURNING current`
+stmtBal, err := tx.PrepareContext(ctx, queryBal)
+if err != nil {
+    return err
+}
+defer stmtBal.Close()
 
-	for _, order := range orders {
-		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
-		if err != nil {
-			return err
-		}
-		if order.Accrual != 0 {
-					fmt.Println("add accrual")
-					fmt.Println(order.Accrual)
-					fmt.Println(order.ID)
-					fmt.Println(order.Order)
-			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
-			if err != nil {
-				return err
-			}
-		}
-	}
+for _, order := range orders {
+    // Update order status first
+    _, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
+    if err != nil {
+        return err
+    }
+    
+    // Update balance if there's an accrual
+    if order.Accrual != 0 {
+        var newBalance float64
+        err = stmtBal.QueryRowContext(ctx, order.Accrual, order.ID).Scan(&newBalance)
+        if err != nil {
+            return err
+        }
+        
+        fmt.Printf("Updated balance for login %s: new balance = %.2f (added accrual %.2f)\n", 
+            order.ID, newBalance, order.Accrual)
+    }
+}
 	err = tx.Commit()
 	if err != nil {
 		return err
