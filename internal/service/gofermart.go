@@ -41,7 +41,7 @@ func New(log *slog.Logger, cfg config.Config, storage *storage.Storage, client *
 }
 
 func (s *Gofermart) UpdateOrders(ctx context.Context) error {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(1 * time.Microsecond)
 	defer ticker.Stop()
 
 	for {
