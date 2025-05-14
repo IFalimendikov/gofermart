@@ -11,8 +11,6 @@ import (
 
 func (s *Storage) GetBalance(ctx context.Context, userID string) (models.Balance, error) {
 	var balance models.Balance
-	fmt.Println("balance is")
-	fmt.Println(userID)
 	query := `SELECT login, current, withdrawn FROM balances WHERE login = $1`
 	row  := s.DB.QueryRowContext(ctx, query, userID)
 	
@@ -20,6 +18,9 @@ func (s *Storage) GetBalance(ctx context.Context, userID string) (models.Balance
 	if err != nil {
 		return balance, err
 	}
+
+	fmt.Println("balance is")
+	fmt.Println(balance)
 
 	return balance, nil
 }
