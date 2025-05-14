@@ -77,7 +77,7 @@ func (t *Transport) NewRouter() *gin.Engine {
 		t.Handler.GetBalance(c, *t.Config)
 	})
 
-	authorized.POST("/withdraw", func(c *gin.Context) {
+	authorized.POST("/balance/withdraw", func(c *gin.Context) {
 		t.Handler.Withdraw(c, *t.Config)
 	})
 
