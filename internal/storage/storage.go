@@ -108,8 +108,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 			return err
 		}
 		if order.Accrual != 0 {
-			var query = `UPDATE balances SET current = current + $1 WHERE user_id = $2`
-			_, err = stmtBal.ExecContext(ctx, query, order.Accrual, order.ID)
+			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
 			}
