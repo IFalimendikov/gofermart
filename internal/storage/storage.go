@@ -110,6 +110,8 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 		if order.Accrual != 0 {
 					fmt.Println("add accrual")
 					fmt.Println(order.Accrual)
+					fmt.Println(order.ID)
+					fmt.Println(order.Order)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
