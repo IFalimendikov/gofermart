@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 
@@ -102,37 +102,20 @@ func (s *Storage) UpdateOrders(ctx context.Context, orders []models.Order) error
 	}
 	defer stmtBal.Close()
 
-	var queryGetBalance = `SELECT current FROM balances WHERE login = $1`
-	stmtGetBal, err := tx.PrepareContext(ctx, queryGetBalance)
-	if err != nil {
-		return err
-	}
-	defer stmtGetBal.Close()
-
 	for _, order := range orders {
-		// Update order status first
 		_, err := stmtOrdr.ExecContext(ctx, order.Status, order.Accrual, order.Order)
 		if err != nil {
 			return err
 		}
-
-		// Update balance if there's an accrual
 		if order.Accrual != 0 {
-			// Update the balance
+					fmt.Println("add accrual")
+					fmt.Println(order.Accrual)
+					fmt.Println(order.ID)
+					fmt.Println(order.Order)
 			_, err = stmtBal.ExecContext(ctx, order.Accrual, order.ID)
 			if err != nil {
 				return err
 			}
-
-			// Get the new balance
-			var newBalance float64
-			err = stmtGetBal.QueryRowContext(ctx, order.ID).Scan(&newBalance)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("Updated balance for login %s: new balance = %.2f (added accrual %.2f)\n",
-				order.ID, newBalance, order.Accrual)
 		}
 	}
 	err = tx.Commit()
