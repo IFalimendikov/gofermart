@@ -64,6 +64,9 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 				}
 				orders = append(orders, order)
 			}
+
+			fmt.Println("ORders")
+			fmt.Println(orders)
 			
 			err = s.updateStatus(ctx, orders)
 			if err != nil {
