@@ -53,7 +53,6 @@ func (t *Transport) NewRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 	r.Use(t.withLogging())
 	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithDecompressFn(gzip.DefaultDecompressHandle)))
-	r.Use(t.withCookies())
 
 	r.POST("/api/user/register", func(c *gin.Context) {
 		t.Handler.Register(c, *t.Config)
