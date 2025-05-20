@@ -32,11 +32,11 @@ func (h *Handler) PostOrders(c *gin.Context, cfg config.Config) {
 		return
 	}
 
-	userID := c.GetString("login")
+	login := c.GetString("login")
 
-	err = h.Service.PostOrders(c.Request.Context(), userID, orderNum)
+	err = h.Service.PostOrders(c.Request.Context(), login, orderNum)
 	if err != nil {
-		switch{
+		switch {
 		case errors.Is(err, storage.ErrDuplicateOrder):
 			c.Status(http.StatusOK)
 			return

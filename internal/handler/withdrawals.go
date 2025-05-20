@@ -10,12 +10,12 @@ import (
 )
 
 func (h *Handler) Withdrawals(c *gin.Context, cfg config.Config) {
-	userID := c.GetString("login")
-	
-	withdrawals, err := h.Service.Withdrawals(c.Request.Context(), userID)
+	login := c.GetString("login")
+
+	withdrawals, err := h.Service.Withdrawals(c.Request.Context(), login)
 	if err != nil {
 		switch {
-		case errors.Is(err, storage.ErrNoOrdersFound):
+		case errors.Is(err, storage.ErrNoWithdrawalsFound):
 			c.Status(http.StatusNoContent)
 			return
 		default:

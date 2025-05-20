@@ -12,5 +12,6 @@ var (
 	ErrWrongPassword = errors.New("login/password pair is wrong")
 	ErrUnauthorized = errors.New("user not logged in")
 	ErrNoOrdersFound = errors.New("client has no orders")
+	ErrNoWithdrawalsFound = errors.New("client has no withdrawals")
 	ErrBalanceTooLow = errors.New("balance is too low for the transcation")
 )

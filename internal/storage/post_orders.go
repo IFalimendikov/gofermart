@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func (s *Storage) PostOrders(ctx context.Context, userID, orderNum string) error {
+func (s *Storage) PostOrders(ctx context.Context, login, orderNum string) error {
 	var sUser string
 	var sNumber string
 	query := `SELECT login, number FROM orders WHERE number = $1`
@@ -16,16 +17,18 @@ func (s *Storage) PostOrders(ctx context.Context, userID, orderNum string) error
 	row.Scan(&sUser, &sNumber)
 
 	switch {
-	case userID == sUser && orderNum == sNumber:
+	case login == sUser && orderNum == sNumber:
 		return ErrDuplicateOrder
-	case orderNum == sNumber && userID != sUser:
+	case orderNum == sNumber && login != sUser:
 		return ErrDuplicateNumber
 	}
 
-	query = `INSERT into orders (number, login, status, uploaded_at) VALUES ($1, $2, $3, $4)`
-	_, err := s.DB.ExecContext(ctx, query, orderNum, userID, "NEW", time.Now().Format(time.RFC3339))
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := sq.Insert("orders").
+		Columns("number", "login", "status", "uploaded_at").
+		Values(orderNum, login, "NEW", time.Now().Format(time.RFC3339)).
+		RunWith(s.DB).
+		PlaceholderFormat(sq.Dollar).
+		ExecContext(ctx)
+
+	return err
 }

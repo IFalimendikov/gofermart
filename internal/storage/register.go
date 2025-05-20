@@ -5,6 +5,7 @@ import (
 	"errors"
 	"gofermart/internal/models"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -17,30 +18,26 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 	}
 	defer tx.Rollback()
 
-	var queryUser = `INSERT into users (login, password) VALUES ($1, $2)`
-	stmtUser, err := tx.PrepareContext(ctx, queryUser)
-	if err != nil {
-		return err
-	}
-	defer stmtUser.Close()
+    _, err = sq.Insert("users").
+        Columns("login", "password").
+        Values(user.Login, user.Password).
+        RunWith(tx).
+        PlaceholderFormat(sq.Dollar).
+        ExecContext(ctx)
+    if err != nil {
+        var pgErr *pgconn.PgError
+        if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+            return ErrDuplicateLogin
+        }
+        return err
+    }
 
-	_, err = tx.ExecContext(ctx, queryUser, user.Login, user.Password)
-	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return ErrDuplicateLogin
-		}
-		return err
-	}
-
-	var queryBal = `INSERT into balances (login) VALUES ($1)`
-	stmtBal, err := tx.PrepareContext(ctx, queryBal)
-	if err != nil {
-		return err
-	}
-	defer stmtBal.Close()
-
-	_, err = tx.ExecContext(ctx, queryBal, user.Login)
+	_, err = sq.Insert("balances").
+		Columns("login").
+		Values(user.Login).
+		RunWith(tx).
+		PlaceholderFormat(sq.Dollar).
+		ExecContext(ctx)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
@@ -49,9 +46,5 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
+	return tx.Commit()
 }

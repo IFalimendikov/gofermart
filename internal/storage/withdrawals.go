@@ -7,7 +7,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func (s *Storage) Withdrawals(ctx context.Context, userID string) ([]models.Withdrawal, error) {
+func (s *Storage) Withdrawals(ctx context.Context, login string) ([]models.Withdrawal, error) {
 	var withdrawals []models.Withdrawal
 
 	var query = `SELECT "order", sum, processed_at FROM withdrawals WHERE login = $1 ORDER BY processed_at DESC`
@@ -17,7 +17,7 @@ func (s *Storage) Withdrawals(ctx context.Context, userID string) ([]models.With
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.QueryContext(ctx, userID)
+	rows, err := stmt.QueryContext(ctx, login)
 	if err != nil {
 		return nil, err
 	}
@@ -35,5 +35,10 @@ func (s *Storage) Withdrawals(ctx context.Context, userID string) ([]models.With
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
+
+	if len(withdrawals) == 0 {
+		return nil, ErrNoWithdrawalsFound
+	}
+
 	return withdrawals, err
 }

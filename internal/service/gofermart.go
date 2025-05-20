@@ -15,12 +15,12 @@ import (
 type Service interface {
 	Register(ctx context.Context, user models.User) error
 	Login(ctx context.Context, user models.User) error
-	Auth(ctx context.Context, userID string) error
-	PostOrders(ctx context.Context, userID string, orderNum int) error
-	GetOrders(ctx context.Context, userID string) ([]models.Order, error)
-	GetBalance(ctx context.Context, userID string) (models.Balance, error)
+	Auth(ctx context.Context, login string) error
+	PostOrders(ctx context.Context, login string, orderNum int) error
+	GetOrders(ctx context.Context, login string) ([]models.Order, error)
+	GetBalance(ctx context.Context, login string) (models.Balance, error)
 	Withdraw(ctx context.Context, withdrawal models.Withdrawal) (models.Balance, error)
-	Withdrawals(ctx context.Context, userID string) ([]models.Withdrawal, error)
+	Withdrawals(ctx context.Context, login string) ([]models.Withdrawal, error)
 }
 
 type Gofermart struct {
@@ -65,7 +65,7 @@ func (s *Gofermart) UpdateOrders(ctx context.Context) error {
 				order.ID = orderOld.ID
 				orders = append(orders, order)
 			}
-			
+
 			err = s.updateStatus(ctx, orders)
 			if err != nil {
 				slog.Error("failed to update orders", "error", err)
@@ -88,17 +88,17 @@ func (s *Gofermart) getOrders(ctx context.Context) ([]models.Order, error) {
 }
 
 func (s *Gofermart) getStatus(ctx context.Context, orderOld models.Order) (models.Order, error) {
-	var order models.Order
+	var o models.Order
 	url := fmt.Sprintf("%s/api/orders/%s", s.cfg.AccrualAddr, orderOld.Order)
-	_, err := s.Client.R().SetContext(ctx).SetResult(&order).Get(url)
+	_, err := s.Client.R().SetContext(ctx).SetResult(&o).Get(url)
 	if err != nil {
-		return order, err
+		return o, err
 	}
-	if order.Status == orderOld.Status {
-		return order, err
+	if o.Status == orderOld.Status {
+		return o, err
 	}
-	order.Order = orderOld.Order
-	return order, nil
+	o.Order = orderOld.Order
+	return o, nil
 }
 
 func (s *Gofermart) updateStatus(ctx context.Context, orders []models.Order) error {

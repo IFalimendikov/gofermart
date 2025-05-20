@@ -2,14 +2,12 @@ package transport
 
 import (
 	"context"
-	// "errors"
 	"log/slog"
 	"time"
 
 	"gofermart/internal/config"
 	"gofermart/internal/handler"
 	"gofermart/internal/models"
-	// "gofermart/internal/storage"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -19,12 +17,11 @@ import (
 type Service interface {
 	Register(ctx context.Context, user models.User) error
 	Login(ctx context.Context, user models.User) error
-	// Auth(ctx context.Context, userID string) error
-	PostOrders(ctx context.Context, userID string, orderNum int) error
-	GetOrders(ctx context.Context, userID string) ([]models.Order, error)
-	GetBalance(ctx context.Context, userID string) (models.Balance, error)
+	PostOrders(ctx context.Context, login string, orderNum int) error
+	GetOrders(ctx context.Context, login string) ([]models.Order, error)
+	GetBalance(ctx context.Context, login string) (models.Balance, error)
 	Withdraw(ctx context.Context, withdrawal models.Withdrawal) (models.Balance, error)
-	Withdrawals(ctx context.Context, userID string) ([]models.Withdrawal, error)
+	Withdrawals(ctx context.Context, login string) ([]models.Withdrawal, error)
 }
 
 type Transport struct {
@@ -112,28 +109,28 @@ func (t *Transport) withLogging() gin.HandlerFunc {
 }
 
 func (t *Transport) withCookies() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        cookie, err := c.Cookie("jwt")
-        if err != nil {
-            c.AbortWithStatus(401)
-            return
-        }
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie("jwt")
+		if err != nil {
+			c.AbortWithStatus(401)
+			return
+		}
 
-        claim := &Claim{}
-        token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (any, error) {
-            if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-                return nil, err
-            }
-            return []byte("123"), nil 
-        })
+		claim := &Claim{}
+		token, err := jwt.ParseWithClaims(cookie, claim, func(t *jwt.Token) (any, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, err
+			}
+			return []byte("123"), nil
+		})
 
-        if err != nil || !token.Valid {
-            c.AbortWithStatus(401)
-            return
-        }
+		if err != nil || !token.Valid {
+			c.AbortWithStatus(401)
+			return
+		}
 
-        c.Set("login", claim.Login)
-        c.Set("password", claim.Password)
-        c.Next()
-    }
+		c.Set("login", claim.Login)
+		c.Set("password", claim.Password)
+		c.Next()
+	}
 }

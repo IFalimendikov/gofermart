@@ -6,6 +6,7 @@ import (
 	"gofermart/internal/models"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -14,8 +15,8 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	var accrual models.Balance
 
 	tx, err := s.DB.BeginTx(ctx, &sql.TxOptions{
-    Isolation: sql.LevelSerializable,
-})
+		Isolation: sql.LevelSerializable,
+	})
 	if err != nil {
 		return accrual, err
 	}
@@ -30,6 +31,7 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 	if !balance.Valid || balance.Float64 < withdrawal.Sum {
 		return accrual, ErrBalanceTooLow
 	}
+
 	_, err = tx.ExecContext(ctx,
 		`UPDATE balances SET current = current - $1, withdrawn = withdrawn + $2 WHERE login = $3`,
 		withdrawal.Sum, withdrawal.Sum, withdrawal.ID)
@@ -37,9 +39,12 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 		return accrual, err
 	}
 
-	_, err = tx.ExecContext(ctx,
-		`INSERT into withdrawals ("order", login, sum, processed_at) VALUES ($1, $2, $3, $4)`,
-		withdrawal.Order, withdrawal.ID, withdrawal.Sum, time.Now().Format(time.RFC3339))
+	_, err = sq.Insert("withdrawals").
+		Columns(`"order"`, "login", "sum", "processed_at").
+		Values(withdrawal.Order, withdrawal.ID, withdrawal.Sum, time.Now().Format(time.RFC3339)).
+		RunWith(tx).
+		PlaceholderFormat(sq.Dollar).
+		ExecContext(ctx)
 	if err != nil {
 		return accrual, err
 	}
@@ -53,9 +58,14 @@ func (s *Storage) Withdraw(ctx context.Context, withdrawal models.Withdrawal) (m
 
 	if currentNull.Valid {
 		accrual.Current = currentNull.Float64
+	} else {
+		accrual.Current = 0.0
 	}
+
 	if withdrawnNull.Valid {
 		accrual.Withdrawn = withdrawnNull.Float64
+	} else {
+		accrual.Withdrawn = 0.0
 	}
 
 	err = tx.Commit()

@@ -10,9 +10,9 @@ import (
 )
 
 func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
-	userID := c.GetString("login")
+	login := c.GetString("login")
 
-	orders, err := h.Service.GetOrders(c.Request.Context(), userID)
+	orders, err := h.Service.GetOrders(c.Request.Context(), login)
 	if err != nil {
 		if errors.Is(err, storage.ErrNoOrdersFound) {
 			c.JSON(http.StatusNoContent, "")

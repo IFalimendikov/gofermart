@@ -8,9 +8,9 @@ import (
 )
 
 func (h *Handler) GetBalance(c *gin.Context, cfg config.Config) {
-	userID := c.GetString("login")
+	login := c.GetString("login")
 
-	balance, err := h.Service.GetBalance(c.Request.Context(), userID)
+	balance, err := h.Service.GetBalance(c.Request.Context(), login)
 	if err != nil {
 		c.JSON(http.StatusNoContent, "")
 		return

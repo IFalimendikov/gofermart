@@ -5,8 +5,8 @@ import (
 	"gofermart/internal/models"
 )
 
-func (s *Gofermart) GetOrders(ctx context.Context, userID string) ([]models.Order, error) {
-	orders, err := s.Storage.GetOrders(ctx, userID)
+func (s *Gofermart) GetOrders(ctx context.Context, login string) ([]models.Order, error) {
+	orders, err := s.Storage.GetOrders(ctx, login)
 	if err != nil {
 		return nil, err
 	}
