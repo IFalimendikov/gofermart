@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func (s *Storage) PostOrders(ctx context.Context, login, orderNum string) error {

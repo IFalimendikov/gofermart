@@ -5,8 +5,6 @@ import (
 	"database/sql"
 
 	"gofermart/internal/models"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func (s *Storage) GetOrders(ctx context.Context, login string) ([]models.Order, error) {

@@ -3,8 +3,6 @@ package storage
 import (
 	"context"
 	"gofermart/internal/models"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func (s *Storage) Withdrawals(ctx context.Context, login string) ([]models.Withdrawal, error) {

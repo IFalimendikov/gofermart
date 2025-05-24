@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Storage struct {

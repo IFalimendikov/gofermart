@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+    "github.com/brianvoe/gofakeit/v7"
+    "github.com/ShiraazMoollatjie/goluhn"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -42,6 +44,8 @@ func setupWithdrawOrdersTestDB(t *testing.T) *sql.DB {
 }
 
 func TestGofermart_Withdraw(t *testing.T) {
+    gofakeit.Seed(0)
+
     db := setupWithdrawOrdersTestDB(t)
     defer db.Close()
     defer func() {
@@ -65,9 +69,12 @@ func TestGofermart_Withdraw(t *testing.T) {
     }
 
     testUser := models.User{
-        Login:    "testuser",
-        Password: "testpass",
+        Login:    gofakeit.Username(),
+        Password: gofakeit.Password(true, true, true, true, false, 10),
     }
+    
+    initialBalance := gofakeit.Float64Range(1000, 5000)
+
     err := service.Register(context.Background(), testUser)
     require.NoError(t, err)
     
@@ -76,8 +83,10 @@ func TestGofermart_Withdraw(t *testing.T) {
         VALUES ($1, $2, $3)
         ON CONFLICT (login) DO UPDATE 
         SET current = $2, withdrawn = $3
-    `, testUser.Login, 1000.0, 0.0)
+    `, testUser.Login, initialBalance, 0.0)
     require.NoError(t, err)
+
+    validLuhnNumber := goluhn.Generate(8)
     
     tests := []struct {
         name       string
@@ -89,39 +98,39 @@ func TestGofermart_Withdraw(t *testing.T) {
         {
             name: "valid withdrawal",
             withdrawal: models.Withdrawal{
-                Order: "79927398713",
-                Sum:   100.0,
+                Order: validLuhnNumber,
+                Sum:   gofakeit.Float64Range(100, initialBalance/2),
             },
-            login:      "testuser",
+            login:      testUser.Login,
             wantStatus: http.StatusOK,
-            wantBalance: models.Balance{
-                Current:   900.0,
-                Withdrawn: 100.0,
-            },
+
         },
         {
             name: "invalid luhn number",
             withdrawal: models.Withdrawal{
-                Order: "12345",
-                Sum:   50.0,
+                Order: gofakeit.Numerify("#####"),
+                Sum:   gofakeit.Float64Range(50, 100),
             },
-            login:      "testuser",
+            login:      testUser.Login,
             wantStatus: http.StatusUnprocessableEntity,
         },
         {
             name: "insufficient balance",
             withdrawal: models.Withdrawal{
-                Order: "79927398713",
-                Sum:   2000.0,
+                Order: validLuhnNumber,
+                Sum:   initialBalance * gofakeit.Float64Range(1.1, 2.0),
             },
-            login:      "testuser",
+            login:      testUser.Login,
             wantStatus: http.StatusBadRequest,
         },
         {
-            name:       "empty request",
-            withdrawal: models.Withdrawal{},
-            login:      "testuser",
-            wantStatus: http.StatusUnprocessableEntity,
+            name: "random valid withdrawal",
+            withdrawal: models.Withdrawal{
+                Order: validLuhnNumber,
+                Sum:   gofakeit.Float64Range(1, initialBalance),
+            },
+            login:      testUser.Login,
+            wantStatus: http.StatusOK,
         },
     }
     

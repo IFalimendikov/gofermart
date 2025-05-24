@@ -1,15 +1,16 @@
-package main 
+package main
 
 import (
 	"context"
+	"github.com/go-resty/resty/v2"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"gofermart/internal/config"
 	"gofermart/internal/flag"
+	"gofermart/internal/handler"
 	"gofermart/internal/logger"
 	"gofermart/internal/service"
 	"gofermart/internal/storage"
 	"gofermart/internal/transport"
-	"gofermart/internal/handler"
-	"github.com/go-resty/resty/v2"
 )
 
 func main() {

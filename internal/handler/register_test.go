@@ -1,19 +1,20 @@
 package handler
 
 import (
-	"context"
-	"database/sql"
-	"strings"
-	"testing"
+    "context"
+    "database/sql"
+    "strings"
+    "testing"
 
-	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gofermart/internal/config"
-	"gofermart/internal/models"
-	"gofermart/internal/service"
-	"gofermart/internal/storage"
-	"log/slog"
+    "github.com/brianvoe/gofakeit/v7"
+    _ "github.com/lib/pq"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+    "gofermart/internal/config"
+    "gofermart/internal/models"
+    "gofermart/internal/service"
+    "gofermart/internal/storage"
+    "log/slog"
 )
 
 func setupRegisterTestDB(t *testing.T) *sql.DB {
@@ -38,117 +39,113 @@ func setupRegisterTestDB(t *testing.T) *sql.DB {
 }
 
 func TestGofermart_Register(t *testing.T) {
-	db := setupRegisterTestDB(t)
-	defer db.Close()
+    db := setupRegisterTestDB(t)
+    defer db.Close()
 
-	defer func() {
-		_, err := db.Exec(`DROP TABLE IF EXISTS users`)
-		require.NoError(t, err)
+    defer func() {
+        _, err := db.Exec(`DROP TABLE IF EXISTS users`)
+        require.NoError(t, err)
+        _, err = db.Exec(`DROP TABLE IF EXISTS balances`)
+        require.NoError(t, err)
+    }()
 
-		_, err = db.Exec(`DROP TABLE IF EXISTS balances`)
-		require.NoError(t, err)
-	}()
+    storage := &storage.Storage{DB: db}
+    service := &service.Gofermart{
+        Storage: storage,
+        Log:     slog.Default(),
+    }
 
-	storage := &storage.Storage{DB: db}
-	service := &service.Gofermart{
-		Storage: storage,
-		Log:     slog.Default(),
-	}
+    baseUser := models.User{
+        Login:    gofakeit.Username(),
+        Password: gofakeit.Password(true, true, true, true, false, 10),
+    }
 
-	tests := []struct {
-		name     string
-		user     models.User
-		wantErr  bool
-		errCheck func(error) bool
-	}{
-		{
-			name: "successful registration",
-			user: models.User{
-				Login:    "testuser",
-				Password: "testpass",
-			},
-			wantErr: false,
-		},
-		{
-			name: "duplicate user",
-			user: models.User{
-				Login:    "testuser",
-				Password: "testpass",
-			},
-			wantErr: true,
-			errCheck: func(err error) bool {
-				return strings.Contains(err.Error(), "duplicate key value")
-			},
-		},
-		{
-			name: "empty login",
-			user: models.User{
-				Login:    "",
-				Password: "testpass",
-			},
-			wantErr: true,
-		},
-		{
-			name: "empty password",
-			user: models.User{
-				Login:    "validuser",
-				Password: "",
-			},
-			wantErr: true,
-		},
-		{
-			name: "special characters in login",
-			user: models.User{
-				Login:    "test@user#123",
-				Password: "testpass",
-			},
-			wantErr: false,
-		},
-		{
-			name: "spaces in login",
-			user: models.User{
-				Login:    "test user",
-				Password: "testpass",
-			},
-			wantErr: false,
-		},
-		{
-			name: "verify balance creation",
-			user: models.User{
-				Login:    "balancetest",
-				Password: "testpass",
-			},
-			wantErr: false,
-		},
-	}
+    tests := []struct {
+        name     string
+        user     models.User
+        wantErr  bool
+        errCheck func(error) bool
+    }{
+        {
+            name: "successful registration with random data",
+            user: models.User{
+                Login:    gofakeit.Username(),
+                Password: gofakeit.Password(true, true, true, true, false, 10),
+            },
+            wantErr: false,
+        },
+        {
+            name:    "duplicate user",
+            user:    baseUser,
+            wantErr: true,
+            errCheck: func(err error) bool {
+                return strings.Contains(err.Error(), "duplicate key value")
+            },
+        },
+        {
+            name: "random email as login",
+            user: models.User{
+                Login:    gofakeit.Email(),
+                Password: gofakeit.Password(true, true, true, true, false, 10),
+            },
+            wantErr: false,
+        },
+        {
+            name: "very long login",
+            user: models.User{
+                Login:    gofakeit.LetterN(50),
+                Password: gofakeit.Password(true, true, true, true, false, 10),
+            },
+            wantErr: false,
+        },
+        {
+            name: "special characters in login",
+            user: models.User{
+                Login:    gofakeit.Username() + "@#$%",
+                Password: gofakeit.Password(true, true, true, true, false, 10),
+            },
+            wantErr: false,
+        },
+        {
+            name: "very long password",
+            user: models.User{
+                Login:    gofakeit.Username(),
+                Password: gofakeit.Password(true, true, true, true, false, 100),
+            },
+            wantErr: false,
+        },
+    }
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := service.Register(context.Background(), tt.user)
+    err := service.Register(context.Background(), baseUser)
+    require.NoError(t, err)
 
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.errCheck != nil {
-					assert.True(t, tt.errCheck(err))
-				}
-			} else {
-				assert.NoError(t, err)
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := service.Register(context.Background(), tt.user)
 
-				var storedUser models.User
-				err = db.QueryRow("SELECT login, password FROM users WHERE login = $1",
-					tt.user.Login).Scan(&storedUser.Login, &storedUser.Password)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.user.Login, storedUser.Login)
-				assert.Equal(t, tt.user.Password, storedUser.Password)
+            if tt.wantErr {
+                assert.Error(t, err)
+                if tt.errCheck != nil {
+                    assert.True(t, tt.errCheck(err))
+                }
+            } else {
+                assert.NoError(t, err)
 
-				var balance float64
-				var withdrawn float64
-				err = db.QueryRow("SELECT current, withdrawn FROM balances WHERE login = $1",
-					tt.user.Login).Scan(&balance, &withdrawn)
-				assert.NoError(t, err)
-				assert.Equal(t, float64(0), balance)
-				assert.Equal(t, float64(0), withdrawn)
-			}
-		})
-	}
+                var storedUser models.User
+                err = db.QueryRow("SELECT login, password FROM users WHERE login = $1",
+                    tt.user.Login).Scan(&storedUser.Login, &storedUser.Password)
+                assert.NoError(t, err)
+                assert.Equal(t, tt.user.Login, storedUser.Login)
+                assert.Equal(t, tt.user.Password, storedUser.Password)
+
+                var balance float64
+                var withdrawn float64
+                err = db.QueryRow("SELECT current, withdrawn FROM balances WHERE login = $1",
+                    tt.user.Login).Scan(&balance, &withdrawn)
+                assert.NoError(t, err)
+                assert.Equal(t, float64(0), balance)
+                assert.Equal(t, float64(0), withdrawn)
+            }
+        })
+    }
 }

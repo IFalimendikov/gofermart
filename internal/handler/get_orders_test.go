@@ -1,21 +1,20 @@
 package handler
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"sync"
-	"testing"
-
-	"gofermart/internal/config"
-	"gofermart/internal/models"
-	"gofermart/internal/service"
-	"gofermart/internal/storage"
-	"log/slog"
-
-	_ "github.com/lib/pq"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+    "context"
+    "database/sql"
+    "testing"
+    "sync"
+    
+    "gofermart/internal/config"
+    "gofermart/internal/models"
+    "gofermart/internal/service"
+    "gofermart/internal/storage"
+    
+    "github.com/brianvoe/gofakeit/v7"
+    "github.com/ShiraazMoollatjie/goluhn"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
 )
 
 func setupGetOrdersTestDB(t *testing.T) *sql.DB {
@@ -38,103 +37,107 @@ func setupGetOrdersTestDB(t *testing.T) *sql.DB {
 }
 
 func TestGofermart_ConcurrentBalanceOperations(t *testing.T) {
-	db := setupGetOrdersTestDB(t)
-	defer db.Close()
-	defer func() {
-		_, err := db.Exec(`DROP TABLE IF EXISTS orders`)
-		require.NoError(t, err)
-		_, err = db.Exec(`DROP TABLE IF EXISTS users`)
-		require.NoError(t, err)
-		_, err = db.Exec(`DROP TABLE IF EXISTS balances`)
-		require.NoError(t, err)
-	}()
+    gofakeit.Seed(0)
 
-	storage := &storage.Storage{DB: db}
-	service := &service.Gofermart{
-		Storage: storage,
-		Log:     slog.Default(),
-	}
+    db := setupGetOrdersTestDB(t)
+    defer db.Close()
+    defer func() {
+        _, err := db.Exec(`DROP TABLE IF EXISTS orders`)
+        require.NoError(t, err)
+        _, err = db.Exec(`DROP TABLE IF EXISTS users`)
+        require.NoError(t, err)
+        _, err = db.Exec(`DROP TABLE IF EXISTS balances`)
+        require.NoError(t, err)
+    }()
 
-	testUser := models.User{
-		Login:    "testuser",
-		Password: "testpass",
-	}
-	err := service.Register(context.Background(), testUser)
-	require.NoError(t, err, "Failed to register test user")
+    storage := &storage.Storage{DB: db}
+    service := &service.Gofermart{
+        Storage: storage,
+    }
 
-	var exists bool
-	err = db.QueryRow(`SELECT EXISTS(SELECT 1 FROM balances WHERE login = $1)`, testUser.Login).Scan(&exists)
-	require.NoError(t, err)
+    testUser := models.User{
+        Login:    gofakeit.Username(),
+        Password: gofakeit.Password(true, true, true, true, false, 10),
+    }
 
-	if exists {
-		_, err = db.Exec(`
-			UPDATE balances 
-			SET current = $1, withdrawn = $2
-			WHERE login = $3
-		`, 1000.0, 0.0, testUser.Login)
-	} else {
-		_, err = db.Exec(`
-			INSERT INTO balances (login, current, withdrawn)
-			VALUES ($1, $2, $3)
-		`, testUser.Login, 1000.0, 0.0)
-	}
-	require.NoError(t, err)
+    err := service.Register(context.Background(), testUser)
+    require.NoError(t, err, "Failed to register test user")
 
-	var wg sync.WaitGroup
-	concurrentOperations := 10
-	wg.Add(concurrentOperations)
+    initialBalance := gofakeit.Float64Range(1000, 5000)
 
-	for i := 0; i < concurrentOperations; i++ {
-		go func(i int) {
-			defer wg.Done()
+    _, err = db.Exec(`
+        INSERT INTO balances (login, current, withdrawn)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (login) DO UPDATE 
+        SET current = $2, withdrawn = $3
+    `, testUser.Login, initialBalance, 0.0)
+    require.NoError(t, err)
 
-			tx, err := db.Begin()
-			require.NoError(t, err)
+    var wg sync.WaitGroup
+    concurrentOperations := gofakeit.Number(5, 20)
+    wg.Add(concurrentOperations)
 
-			defer func() {
-				if err != nil {
-					tx.Rollback()
-				}
-			}()
+    accrualAmount := gofakeit.Float64Range(10, 100)
+    withdrawAmount := gofakeit.Float64Range(5, 50)
 
-			if i%2 == 0 {
-				orderNum := fmt.Sprintf("7992739871%d", i)
-				_, err := tx.Exec(`
-					INSERT INTO orders (number, login, status, accrual, uploaded_at)
-					VALUES ($1, $2, $3, $4, NOW())
-					ON CONFLICT (number) DO NOTHING
-				`, orderNum, testUser.Login, "PROCESSED", 50.0)
-				require.NoError(t, err)
+    expectedAccrual := 0.0
+    expectedWithdrawn := 0.0
 
-				_, err = tx.Exec(`
-					UPDATE balances 
-					SET current = current + 50.0
-					WHERE login = $1
-				`, testUser.Login)
-				require.NoError(t, err)
-			} else {
-				_, err := tx.Exec(`
-					UPDATE balances 
-					SET current = current - 25.0,
-					    withdrawn = withdrawn + 25.0
-					WHERE login = $1
-				`, testUser.Login)
-				require.NoError(t, err)
-			}
+    for i := 0; i < concurrentOperations; i++ {
+        go func(i int) {
+            defer wg.Done()
 
-			err = tx.Commit()
-			require.NoError(t, err)
-		}(i)
-	}
+            tx, err := db.Begin()
+            require.NoError(t, err)
 
-	wg.Wait()
+            defer func() {
+                if err != nil {
+                    tx.Rollback()
+                }
+            }()
 
-	var currentBalance, withdrawnBalance float64
-	err = db.QueryRow(`
-		SELECT current, withdrawn FROM balances WHERE login = $1
-	`, testUser.Login).Scan(&currentBalance, &withdrawnBalance)
-	require.NoError(t, err)
+            if i%2 == 0 {
+                orderNum := goluhn.Generate(8)
+                _, err := tx.Exec(`
+                    INSERT INTO orders (number, login, status, accrual, uploaded_at)
+                    VALUES ($1, $2, $3, $4, NOW())
+                    ON CONFLICT (number) DO NOTHING
+                `, orderNum, testUser.Login, "PROCESSED", accrualAmount)
+                require.NoError(t, err)
 
-	assert.Equal(t, 1125.0, currentBalance, "Unexpected final current balance")
-	assert.Equal(t, 125.0, withdrawnBalance, "Unexpected final withdrawn balance")
+                expectedAccrual += accrualAmount
+
+                _, err = tx.Exec(`
+                    UPDATE balances 
+                    SET current = current + $1
+                    WHERE login = $2
+                `, accrualAmount, testUser.Login)
+                require.NoError(t, err)
+            } else {
+                expectedWithdrawn += withdrawAmount
+                _, err := tx.Exec(`
+                    UPDATE balances 
+                    SET current = current - $1,
+                        withdrawn = withdrawn + $1
+                    WHERE login = $2
+                `, withdrawAmount, testUser.Login)
+                require.NoError(t, err)
+            }
+
+            err = tx.Commit()
+            require.NoError(t, err)
+        }(i)
+    }
+
+    wg.Wait()
+
+    var currentBalance, withdrawnBalance float64
+    err = db.QueryRow(`
+        SELECT current, withdrawn FROM balances WHERE login = $1
+    `, testUser.Login).Scan(&currentBalance, &withdrawnBalance)
+    require.NoError(t, err)
+
+    expectedFinalBalance := initialBalance + expectedAccrual - expectedWithdrawn
+    assert.Equal(t, expectedFinalBalance, currentBalance, "Unexpected final current balance")
+    assert.Equal(t, expectedWithdrawn, withdrawnBalance, "Unexpected final withdrawn balance")
 }

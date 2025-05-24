@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ShiraazMoollatjie/goluhn"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -18,11 +20,12 @@ import (
 	"gofermart/internal/service"
 	"gofermart/internal/storage"
 	"log/slog"
+	"strconv"
 )
 
 func setupPostOrdersTestDB(t *testing.T) *sql.DB {
 	cfg := config.Config{}
-    
+
 	err := config.Read(&cfg)
 	require.NoError(t, err, "Failed to read config")
 	db, err := sql.Open("postgres", cfg.DatabaseURI)
@@ -40,6 +43,8 @@ func setupPostOrdersTestDB(t *testing.T) *sql.DB {
 }
 
 func TestGofermart_PostOrders(t *testing.T) {
+	gofakeit.Seed(0)
+
 	db := setupPostOrdersTestDB(t)
 	defer db.Close()
 	defer func() {
@@ -62,12 +67,12 @@ func TestGofermart_PostOrders(t *testing.T) {
 
 	testUsers := []models.User{
 		{
-			Login:    "testuser1",
-			Password: "testpass1",
+			Login:    gofakeit.Username(),
+			Password: gofakeit.Password(true, true, true, true, false, 10),
 		},
 		{
-			Login:    "testuser2",
-			Password: "testpass2",
+			Login:    gofakeit.Username(),
+			Password: gofakeit.Password(true, true, true, true, false, 10),
 		},
 	}
 
@@ -75,6 +80,8 @@ func TestGofermart_PostOrders(t *testing.T) {
 		err := service.Register(context.Background(), user)
 		require.NoError(t, err, "Failed to register test user")
 	}
+
+	validOrderNum, _ := strconv.Atoi(goluhn.Generate(8))
 
 	tests := []struct {
 		name       string
@@ -85,15 +92,15 @@ func TestGofermart_PostOrders(t *testing.T) {
 	}{
 		{
 			name:       "valid order number",
-			orderNum:   17893729974,
-			login:      "testuser1",
+			orderNum:   validOrderNum,
+			login:      testUsers[0].Login,
 			wantStatus: http.StatusAccepted,
 		},
 		{
 			name:       "invalid Luhn number",
-			orderNum:   12345,
-			login:      "testuser1",
-			wantStatus: http.StatusUnprocessableEntity, 
+			orderNum:   gofakeit.Number(10000, 99999),
+			login:      testUsers[0].Login,
+			wantStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name:     "duplicate order same user",
@@ -119,14 +126,14 @@ func TestGofermart_PostOrders(t *testing.T) {
                 `, 17893729974, "testuser1")
 				require.NoError(t, err)
 			},
-			wantStatus: http.StatusConflict, 
+			wantStatus: http.StatusConflict,
 		},
 		{
 			name:       "empty login number",
 			orderNum:   123,
 			login:      "",
-			wantStatus: http.StatusUnprocessableEntity, 
-        },
+			wantStatus: http.StatusUnprocessableEntity,
+		},
 	}
 
 	gin.SetMode(gin.TestMode)

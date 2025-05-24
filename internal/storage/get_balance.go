@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"gofermart/internal/models"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func (s *Storage) GetBalance(ctx context.Context, login string) (models.Balance, error) {
