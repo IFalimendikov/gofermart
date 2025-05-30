@@ -52,7 +52,7 @@ func (h *Handler) Register(c *gin.Context) {
 		Password: user.Password,
 	})
 
-	signedToken, err := token.SignedString([]byte(h.cfg.JWTSecret))
+	signedToken, err := token.SignedString([]byte("123"))
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
