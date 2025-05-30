@@ -99,7 +99,7 @@ func (s *Storage) UpdateOrders(ctx context.Context,  runner sq.BaseRunner, order
 
 		if o.Accrual != 0 {
 			_, err = sq.Update("balances").
-				Set("current", sq.Expr("current + ?", o.Accrual)).
+				Set("current", sq.Expr("current + $1", o.Accrual)).
 				Where(sq.Eq{"login": o.ID}).
 				RunWith(runner).
 				PlaceholderFormat(sq.Dollar).

@@ -29,8 +29,8 @@ func (s *Storage) Withdraw(ctx context.Context, runner sq.BaseRunner, withdrawal
 	}
 
 	_, err = sq.Update("balances").
-		Set("current", sq.Expr("current + 100", withdrawal.Sum)).
-		Set("withdrawn", sq.Expr("withdrawn + 100", withdrawal.Sum)).
+		Set("current", sq.Expr("current - $1", withdrawal.Sum)).
+		Set("withdrawn", sq.Expr("withdrawn + $1", withdrawal.Sum)).
 		Where(sq.Eq{"login": withdrawal.ID}).
 		RunWith(runner).
 		PlaceholderFormat(sq.Dollar).
