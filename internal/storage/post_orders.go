@@ -35,6 +35,9 @@ func (s *Storage) PostOrders(ctx context.Context, login, orderNum string) error 
 		RunWith(s.DB).
 		PlaceholderFormat(sq.Dollar).
 		ExecContext(ctx)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

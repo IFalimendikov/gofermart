@@ -30,5 +30,9 @@ func (s *Storage) GetBalance(ctx context.Context, login string) (models.Balance,
 		}
 		return balance, err
 	}
+	if err = row.Err(); err != nil {
+		return balance, err
+	}
+
 	return balance, nil
 }
