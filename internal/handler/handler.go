@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"gofermart/internal/config"
 	"gofermart/internal/models"
 	"log/slog"
 )
@@ -19,11 +20,13 @@ type Service interface {
 type Handler struct {
 	Service Service
 	log     *slog.Logger
+	cfg     *config.Config
 }
 
-func New(s Service, log *slog.Logger) *Handler {
+func New(s Service, log *slog.Logger, cfg *config.Config) *Handler {
 	return &Handler{
 		Service: s,
 		log:     log,
+		cfg:     cfg,
 	}
 }

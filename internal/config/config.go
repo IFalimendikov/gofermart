@@ -7,27 +7,33 @@ import (
 )
 
 type Config struct {
-    ServerAddr  string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
-    DatabaseURI string `env:"DATABASE_URI"`
-    AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
+	ServerAddr  string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
+	DatabaseURI string `env:"DATABASE_URI"`
+	AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
+	JWTSecret   string `env:"JWT_SECRET"`
 }
+
 func Read(cfg *Config) error {
-    err := env.Load()
-    if err != nil && !os.IsNotExist(err) {
-        return err
-    }
+	err := env.Load()
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
 
-    if cfg.ServerAddr == "" {
-        cfg.ServerAddr = os.Getenv("RUN_ADDRESS")
-    }
+	if cfg.ServerAddr == "" {
+		cfg.ServerAddr = os.Getenv("RUN_ADDRESS")
+	}
 
-    if cfg.DatabaseURI == "" {
-        cfg.DatabaseURI = os.Getenv("DATABASE_URI")
-    }
+	if cfg.DatabaseURI == "" {
+		cfg.DatabaseURI = os.Getenv("DATABASE_URI")
+	}
 
-    if cfg.AccrualAddr == "" {
-        cfg.AccrualAddr = os.Getenv("ACCRUAL_SYSTEM_ADDRESS")
-    }
+	if cfg.AccrualAddr == "" {
+		cfg.AccrualAddr = os.Getenv("ACCRUAL_SYSTEM_ADDRESS")
+	}
 
-    return nil
+	if cfg.JWTSecret == "" {
+		cfg.JWTSecret = os.Getenv("JWT_SECRET")
+	}
+
+	return nil
 }

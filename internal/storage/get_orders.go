@@ -2,15 +2,21 @@ package storage
 
 import (
 	"context"
-	"database/sql"
-
 	"gofermart/internal/models"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 func (s *Storage) GetOrders(ctx context.Context, login string) ([]models.Order, error) {
 	orders := make([]models.Order, 0)
-	query := `SELECT number, status, accrual, uploaded_at FROM orders WHERE login = $1 ORDER BY uploaded_at DESC`
-	rows, err := s.DB.Query(query, login)
+
+	rows, err := sq.Select("number", "status", "accrual", "uploaded_at").
+		From("orders").
+		Where(sq.Eq{"login": login}).
+		OrderBy("uploaded_at DESC").
+		RunWith(s.DB).
+		PlaceholderFormat(sq.Dollar).
+		QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -18,16 +24,11 @@ func (s *Storage) GetOrders(ctx context.Context, login string) ([]models.Order, 
 
 	for rows.Next() {
 		var o models.Order
-		var accrual sql.NullFloat64
-		err := rows.Scan(&o.Order, &o.Status, &accrual, &o.UploadedAt)
+		err := rows.Scan(&o.Order, &o.Status, &o.Accrual, &o.UploadedAt)
 		if err != nil {
 			return nil, err
 		}
-		if accrual.Valid {
-			o.Accrual = accrual.Float64
-		} else {
-			o.Accrual = 0.0
-		}
+
 		orders = append(orders, o)
 	}
 

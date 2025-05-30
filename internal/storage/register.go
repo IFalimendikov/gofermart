@@ -10,17 +10,11 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (s *Storage) Register(ctx context.Context, user models.User) error {
-	tx, err := s.DB.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-    _, err = sq.Insert("users").
+func (s *Storage) Register(ctx context.Context, runner sq.BaseRunner, user models.User) error {
+    _, err := sq.Insert("users").
         Columns("login", "password").
         Values(user.Login, user.Password).
-        RunWith(tx).
+        RunWith(runner).
         PlaceholderFormat(sq.Dollar).
         ExecContext(ctx)
     if err != nil {
@@ -34,7 +28,7 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 	_, err = sq.Insert("balances").
 		Columns("login").
 		Values(user.Login).
-		RunWith(tx).
+		RunWith(runner).
 		PlaceholderFormat(sq.Dollar).
 		ExecContext(ctx)
 	if err != nil {
@@ -45,5 +39,5 @@ func (s *Storage) Register(ctx context.Context, user models.User) error {
 		return err
 	}
 
-	return tx.Commit()
+	return nil
 }

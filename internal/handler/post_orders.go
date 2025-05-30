@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"gofermart/internal/config"
 	"gofermart/internal/service"
 	"gofermart/internal/storage"
 	"io"
@@ -12,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) PostOrders(c *gin.Context, cfg config.Config) {
+func (h *Handler) PostOrders(c *gin.Context) {
 	var orderNum int
 
 	body, err := io.ReadAll(c.Request.Body)

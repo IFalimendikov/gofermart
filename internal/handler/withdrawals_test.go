@@ -72,8 +72,8 @@ func TestGofermart_Withdrawals(t *testing.T) {
 	require.NoError(t, err)
 
 	timeFormat := "2006-01-02 15:04:05.999999999-07:00"
-	now := time.Now().Format(timeFormat)
-	later := time.Now().Add(time.Hour).Format(timeFormat)
+	now := time.Now().UTC().Format(timeFormat)
+	later := time.Now().UTC().Add(time.Hour).Format(timeFormat)
 
 	testWithdrawals := []struct {
 		order       string
@@ -130,7 +130,7 @@ func TestGofermart_Withdrawals(t *testing.T) {
 			})
 
 			router.GET("/api/user/withdrawals", func(c *gin.Context) {
-				handler.Withdrawals(c, config.Config{})
+				handler.Withdrawals(c)
 			})
 
 			w := httptest.NewRecorder()

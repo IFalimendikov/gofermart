@@ -3,19 +3,20 @@ package storage
 import (
 	"context"
 	"gofermart/internal/models"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 func (s *Storage) Withdrawals(ctx context.Context, login string) ([]models.Withdrawal, error) {
 	var withdrawals []models.Withdrawal
 
-	var query = `SELECT "order", sum, processed_at FROM withdrawals WHERE login = $1 ORDER BY processed_at DESC`
-	stmt, err := s.DB.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
-	rows, err := stmt.QueryContext(ctx, login)
+	rows, err := sq.Select(`"order"`, "sum", "processed_at").
+		From("withdrawals").
+		Where(sq.Eq{"login": login}).
+		OrderBy("processed_at DESC").
+		RunWith(s.DB).
+		PlaceholderFormat(sq.Dollar).
+		QueryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,9 +35,5 @@ func (s *Storage) Withdrawals(ctx context.Context, login string) ([]models.Withd
 		return nil, err
 	}
 
-	if len(withdrawals) == 0 {
-		return nil, ErrNoWithdrawalsFound
-	}
-
-	return withdrawals, err
+	return withdrawals, nil
 }

@@ -5,13 +5,24 @@ import (
 	"database/sql"
 	"errors"
 	"gofermart/internal/models"
+
+    sq "github.com/Masterminds/squirrel"
 )
 
 func (s *Storage) Login(ctx context.Context, user models.User) error {
-    checkQuery := `SELECT login FROM users WHERE login = $1 AND password = $2`
-    
     var login string
-    err := s.DB.QueryRowContext(ctx, checkQuery, user.Login, user.Password).Scan(&login)
+    
+    row := sq.Select("login").
+        From("users").
+        Where(sq.Eq{
+            "login": user.Login,
+            "password": user.Password,
+        }).
+        RunWith(s.DB).
+        PlaceholderFormat(sq.Dollar).
+        QueryRowContext(ctx)
+
+    err := row.Scan(&login)
     if err != nil {
         if errors.Is(err, sql.ErrNoRows) {
             return ErrWrongPassword

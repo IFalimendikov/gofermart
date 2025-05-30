@@ -153,7 +153,7 @@ func TestGofermart_Withdraw(t *testing.T) {
             })
             
             router.POST("/api/user/balance/withdraw", func(c *gin.Context) {
-                handler.Withdraw(c, config.Config{})
+                handler.Withdraw(c)
             })
             
             withdrawalJSON, err := json.Marshal(tt.withdrawal)

@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"gofermart/internal/config"
 	"gofermart/internal/models"
 	"gofermart/internal/service"
 	"gofermart/internal/storage"
@@ -13,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) Withdraw(c *gin.Context, cfg config.Config) {
+func (h *Handler) Withdraw(c *gin.Context) {
 	var withdrawal models.Withdrawal
 	var balance models.Balance
 

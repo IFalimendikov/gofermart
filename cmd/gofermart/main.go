@@ -36,7 +36,7 @@ func main() {
 		log.Error("Error creating new gofermart service", "error", err)
 	}
 
-	h := handler.New(s, log)
+	h := handler.New(s, log, &cfg)
 
 	t := transport.New(&cfg, h, log)
 	r := t.NewRouter()

@@ -154,7 +154,7 @@ func TestGofermart_PostOrders(t *testing.T) {
 			})
 
 			router.POST("/api/user/orders", func(c *gin.Context) {
-				handler.PostOrders(c, config.Config{})
+				handler.PostOrders(c)
 			})
 
 			orderJSON, err := json.Marshal(tt.orderNum)

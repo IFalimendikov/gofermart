@@ -52,34 +52,34 @@ func (t *Transport) NewRouter() *gin.Engine {
 	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithDecompressFn(gzip.DefaultDecompressHandle)))
 
 	r.POST("/api/user/register", func(c *gin.Context) {
-		t.Handler.Register(c, *t.Config)
+		t.Handler.Register(c)
 	})
 
 	r.POST("/api/user/login", func(c *gin.Context) {
-		t.Handler.Login(c, *t.Config)
+		t.Handler.Login(c)
 	})
 
 	authorized := r.Group("api/user")
 	authorized.Use(t.withCookies())
 
 	authorized.POST("/orders", func(c *gin.Context) {
-		t.Handler.PostOrders(c, *t.Config)
+		t.Handler.PostOrders(c)
 	})
 
 	authorized.GET("/orders", func(c *gin.Context) {
-		t.Handler.GetOrders(c, *t.Config)
+		t.Handler.GetOrders(c)
 	})
 
 	authorized.GET("/balance", func(c *gin.Context) {
-		t.Handler.GetBalance(c, *t.Config)
+		t.Handler.GetBalance(c)
 	})
 
 	authorized.POST("/balance/withdraw", func(c *gin.Context) {
-		t.Handler.Withdraw(c, *t.Config)
+		t.Handler.Withdraw(c)
 	})
 
 	authorized.GET("/withdrawals", func(c *gin.Context) {
-		t.Handler.Withdrawals(c, *t.Config)
+		t.Handler.Withdrawals(c)
 	})
 
 	return r
@@ -87,7 +87,7 @@ func (t *Transport) NewRouter() *gin.Engine {
 
 func (t *Transport) withLogging() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now()
+		start := time.Now().UTC()
 		uri := c.Request.RequestURI
 		method := c.Request.Method
 

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
 	"gofermart/internal/storage"
@@ -102,9 +103,21 @@ func (s *Gofermart) getStatus(ctx context.Context, orderOld models.Order) (model
 }
 
 func (s *Gofermart) updateStatus(ctx context.Context, orders []models.Order) error {
-	err := s.Storage.UpdateOrders(ctx, orders)
+	tx, err := s.Storage.DB.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
+
+	err = s.Storage.UpdateOrders(ctx, tx, orders)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+        return err
+    }
 	return nil
 }

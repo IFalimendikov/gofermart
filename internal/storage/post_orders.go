@@ -10,10 +10,17 @@ import (
 func (s *Storage) PostOrders(ctx context.Context, login, orderNum string) error {
 	var sUser string
 	var sNumber string
-	query := `SELECT login, number FROM orders WHERE number = $1`
-	row := s.DB.QueryRowContext(ctx, query, orderNum)
 
-	row.Scan(&sUser, &sNumber)
+	row := sq.Select("login" , "number").
+		From("orders").
+		Where(sq.Eq{"number": orderNum}).
+		RunWith(s.DB).
+		PlaceholderFormat(sq.Dollar).
+		QueryRowContext(ctx)
+	err := row.Scan(&sUser, &sNumber)
+	if err != nil {
+		return err
+	}
 
 	switch {
 	case login == sUser && orderNum == sNumber:
@@ -22,12 +29,12 @@ func (s *Storage) PostOrders(ctx context.Context, login, orderNum string) error 
 		return ErrDuplicateNumber
 	}
 
-	_, err := sq.Insert("orders").
+	_, err = sq.Insert("orders").
 		Columns("number", "login", "status", "uploaded_at").
-		Values(orderNum, login, "NEW", time.Now().Format(time.RFC3339)).
+		Values(orderNum, login, "NEW", time.Now().UTC().Format(time.RFC3339)).
 		RunWith(s.DB).
 		PlaceholderFormat(sq.Dollar).
 		ExecContext(ctx)
 
-	return err
+	return nil
 }

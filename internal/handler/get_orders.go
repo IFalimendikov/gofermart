@@ -2,14 +2,13 @@ package handler
 
 import (
 	"errors"
-	"gofermart/internal/config"
 	"gofermart/internal/storage"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) GetOrders(c *gin.Context, cfg config.Config) {
+func (h *Handler) GetOrders(c *gin.Context) {
 	login := c.GetString("login")
 
 	orders, err := h.Service.GetOrders(c.Request.Context(), login)
