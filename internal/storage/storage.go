@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -85,7 +84,7 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 	return orders, nil
 }
 
-func (s *Storage) UpdateOrders(ctx context.Context, runner sq.BaseRunner, orders []models.Order) error {
+func (s *Storage) UpdateOrders(ctx context.Context,  runner sq.BaseRunner, orders []models.Order) error {
 	for _, o := range orders {
 		_, err := sq.Update("orders").
 			Set("status", o.Status).
@@ -108,22 +107,6 @@ func (s *Storage) UpdateOrders(ctx context.Context, runner sq.BaseRunner, orders
 			if err != nil {
 				return err
 			}
-
-			// Add this code to check new balance
-			var newBalance float64
-			err = sq.Select("current").
-				From("balances").
-				Where(sq.Eq{"login": o.ID}).
-				RunWith(runner).
-				PlaceholderFormat(sq.Dollar).
-				QueryRowContext(ctx).
-				Scan(&newBalance)
-			if err != nil {
-				return err
-			}
-
-			// Print to console
-			fmt.Printf("Updated balance for user %s: %.2f points (added %.2f)\n", o.ID, newBalance, o.Accrual)
 		}
 	}
 	return nil
