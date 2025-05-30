@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"database/sql"
 	"gofermart/internal/config"
 	"gofermart/internal/models"
@@ -86,36 +86,45 @@ func (s *Storage) GetOrdersNums(ctx context.Context) ([]models.Order, error) {
 }
 
 func (s *Storage) UpdateOrders(ctx context.Context, runner sq.BaseRunner, orders []models.Order) error {
-    for _, o := range orders {
-        log.Printf("INFO Updating order: %s with status: %s and accrual: %.2f", o.Order, o.Status, o.Accrual)
-        
-        _, err := sq.Update("orders").
-            Set("status", o.Status).
-            Set("accrual", o.Accrual).
-            Where(sq.Eq{"number": o.Order}).
-            RunWith(runner).
-            PlaceholderFormat(sq.Dollar).
-            ExecContext(ctx)
-        if err != nil {
-            log.Printf("ERROR Failed to update order %s: %v", o.Order, err)
-            return err
-        }
-        log.Printf("INFO Successfully updated order: %s", o.Order)
+	for _, o := range orders {
+		_, err := sq.Update("orders").
+			Set("status", o.Status).
+			Set("accrual", o.Accrual).
+			Where(sq.Eq{"number": o.Order}).
+			RunWith(runner).
+			PlaceholderFormat(sq.Dollar).
+			ExecContext(ctx)
+		if err != nil {
+			return err
+		}
 
-        if o.Accrual != 0 {
-            log.Printf("INFO Updating balance for user %s with accrual: %.2f", o.ID, o.Accrual)
-            _, err = sq.Update("balances").
-                Set("current", o.Accrual).
-                Where(sq.Eq{"login": o.ID}).
-                RunWith(runner).
-                PlaceholderFormat(sq.Dollar).
-                ExecContext(ctx)
-            if err != nil {
-                log.Printf("ERROR Failed to update balance for user %s: %v", o.ID, err)
-                return err
-            }
-            log.Printf("INFO Successfully updated balance for user: %s", o.ID)
-        }
-    }
-    return nil
+		if o.Accrual != 0 {
+			_, err = sq.Update("balances").
+				Set("current", sq.Expr("current + ?", o.Accrual)).
+				Where(sq.Eq{"login": o.ID}).
+				RunWith(runner).
+				PlaceholderFormat(sq.Dollar).
+				ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			// Add this code to check new balance
+			var newBalance float64
+			err = sq.Select("current").
+				From("balances").
+				Where(sq.Eq{"login": o.ID}).
+				RunWith(runner).
+				PlaceholderFormat(sq.Dollar).
+				QueryRowContext(ctx).
+				Scan(&newBalance)
+			if err != nil {
+				return err
+			}
+
+			// Print to console
+			fmt.Printf("Updated balance for user %s: %.2f points (added %.2f)\n", o.ID, newBalance, o.Accrual)
+		}
+	}
+	return nil
 }
