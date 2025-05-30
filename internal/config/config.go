@@ -10,7 +10,7 @@ type Config struct {
 	ServerAddr  string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
 	DatabaseURI string `env:"DATABASE_URI"`
 	AccrualAddr string `env:"ACCRUAL_SYSTEM_ADDRESS"`
-	JWTSecret   string `env:"JWT_SECRET"`
+	JWTSecret   string `env:"JWT_SECRET" envDefault:"123"`
 }
 
 func Read(cfg *Config) error {
