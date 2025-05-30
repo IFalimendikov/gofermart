@@ -105,7 +105,7 @@ func (s *Storage) UpdateOrders(ctx context.Context, runner sq.BaseRunner, orders
         if o.Accrual != 0 {
             log.Printf("INFO Updating balance for user %s with accrual: %.2f", o.ID, o.Accrual)
             _, err = sq.Update("balances").
-                Set("current", sq.Expr("current = current + $1", o.Accrual)).
+                Set("current", o.Accrual).
                 Where(sq.Eq{"login": o.ID}).
                 RunWith(runner).
                 PlaceholderFormat(sq.Dollar).
