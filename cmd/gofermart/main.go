@@ -1,16 +1,15 @@
-package main
+package main 
 
 import (
 	"context"
-	"github.com/go-resty/resty/v2"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"gofermart/internal/config"
 	"gofermart/internal/flag"
-	"gofermart/internal/handler"
 	"gofermart/internal/logger"
 	"gofermart/internal/service"
 	"gofermart/internal/storage"
 	"gofermart/internal/transport"
+	"gofermart/internal/handler"
+	"github.com/go-resty/resty/v2"
 )
 
 func main() {
@@ -36,7 +35,6 @@ func main() {
 	if err != nil {
 		log.Error("Error creating new gofermart service", "error", err)
 	}
-	go s.UpdateOrders(ctx)
 
 	h := handler.New(s, log, &cfg)
 
